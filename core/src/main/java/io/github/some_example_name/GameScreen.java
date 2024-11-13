@@ -49,9 +49,12 @@ public class GameScreen implements Screen {
     BitmapFont font;
     Texture enemyTexture;
     Array<Sprite> enemySprites;
-
+    private float jumpForce = 5f;         // Сила прыжка
+    private float gravity = -9.8f;        // Сила гравитации
+    private boolean isJumping = false;    // Проверка, находится ли персонаж в прыжке
+    private float verticalVelocity = 0f;  // Вертикальная скорость для прыжка
     float enemySpawnTimer = 0;
-    float enemySpawnInterval = 10f;  // Начальная редкость появления противника
+    float enemySpawnInterval = 20f;  // Начальная редкость появления противника
 
     public GameScreen(Drop game) {
         this.game = game;
@@ -136,14 +139,37 @@ public class GameScreen implements Screen {
             }
             bucketSprite.translateX(-speed * Gdx.graphics.getDeltaTime());
         }
-    }
 
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && currentStamina >= maxStamina / 4) {
+            jump();  // Метод прыжка
+            currentStamina -= maxStamina / 4;  // Уменьшаем стамину на четверть
+        }
+
+    }
+    // Метод прыжка
+    private void jump() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !isJumping) {
+            verticalVelocity = jumpForce;
+            isJumping = true;
+        }
+    }
     private void logic(float delta) {
         float worldWidth = viewport.getWorldWidth();
         float bucketWidth = bucketSprite.getWidth();
         dropSpeed += dropSpeedIncreaseRate * delta;
         bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, worldWidth - bucketWidth));
         bucketRectangle.set(bucketSprite.getX(), bucketSprite.getY(), bucketWidth, bucketSprite.getHeight());
+        if (isJumping) {
+            verticalVelocity += gravity * delta;   // Применяем гравитацию к вертикальной скорости
+            bucketSprite.translateY(verticalVelocity * delta);  // Обновляем позицию
+
+            // Проверка приземления
+            if (bucketSprite.getY() <= 0) {    // Если персонаж достиг земли
+                bucketSprite.setY(0);          // Возвращаем на уровень земли
+                isJumping = false;             // Завершаем прыжок
+                verticalVelocity = 0;          // Сбрасываем вертикальную скорость
+            }
+        }
 
         for (int i = dropSprites.size - 1; i >= 0; i--) {
             Sprite dropSprite = dropSprites.get(i);
@@ -168,9 +194,11 @@ public class GameScreen implements Screen {
         if (dropTimer > 1f) {
             dropTimer = 0;
             createDroplet();
-            updateEnemies(delta);
         }
+
+        updateEnemies(delta);  // <-- Переносим вызов за пределы условия `if (dropTimer > 1f)`
     }
+
 
     private void draw() {
         Gdx.gl.glClearColor(0, 0, 0, 1);
