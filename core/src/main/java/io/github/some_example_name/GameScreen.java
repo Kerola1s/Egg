@@ -17,7 +17,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class GameScreen implements Screen {
-    float dropSpeed = 2f;  // Начальная скорость падения капель
+    float dropSpeed = 2f;
     float dropSpeedIncreaseRate = 0.1f;
     float dropTimer = 0;
     float reload = 5f;
@@ -46,10 +46,17 @@ public class GameScreen implements Screen {
     Rectangle bucketRectangle;
     Rectangle dropRectangle;
     int dropCount = 0;
-    BitmapFont font;  // Для отображения счётчика на экране
+    BitmapFont font;
+    Texture enemyTexture;
+    Array<Sprite> enemySprites;
+
+    float enemySpawnTimer = 0;
+    float enemySpawnInterval = 10f;  // Начальная редкость появления противника
 
     public GameScreen(Drop game) {
         this.game = game;
+        enemyTexture = new Texture("Bimba.png");
+        enemySprites = new Array<>();
         viewport = new FitViewport(8, 5);
         dropTexture = new Texture[]{
             new Texture("egg_1.png"),
@@ -73,7 +80,6 @@ public class GameScreen implements Screen {
         music.setVolume(.5f);
         music.play();
 
-        // Инициализация шрифта
         font = new BitmapFont();
         font.setColor(Color.WHITE);
         font.getData().setScale(3f);
@@ -162,6 +168,7 @@ public class GameScreen implements Screen {
         if (dropTimer > 1f) {
             dropTimer = 0;
             createDroplet();
+            updateEnemies(delta);
         }
     }
 
@@ -181,12 +188,12 @@ public class GameScreen implements Screen {
         for (Sprite dropSprite : dropSprites) {
             dropSprite.draw(game.batch);
         }
+        for (Sprite enemySprite : enemySprites) {
+            enemySprite.draw(game.batch);
+        }
 
         drawStaminaIcons();
-
-        // Отображение счётчика стамины и количества пойманных капель
-        font.draw(game.batch, "Stamina: " + (int) currentStamina, 50, worldHeight - 50);
-        font.draw(game.batch, "Поймано капель: " + dropCount, 50, worldHeight - 100);
+        drawScore();
 
         game.batch.end();
     }
@@ -200,6 +207,17 @@ public class GameScreen implements Screen {
         }
     }
 
+    private void drawScore() {
+        float worldHeight = viewport.getWorldHeight();
+        font.setColor(Color.BLACK);          // Установка цвета текста в черный
+        font.getData().setScale(0.2f);        // Настройка масштаба текста (можно менять)
+
+
+        font.draw(game.batch, "Stamina: " + (int) currentStamina, 10, worldHeight - 20);
+        font.draw(game.batch, "Поймано капель: " + dropCount, 10, worldHeight - 60);
+    }
+
+
     private void createDroplet() {
         float dropWidth = 1;
         float dropHeight = 1;
@@ -210,6 +228,47 @@ public class GameScreen implements Screen {
         dropSprite.setX(MathUtils.random(0f, worldWidth - dropWidth));
         dropSprite.setY(viewport.getWorldHeight());
         dropSprites.add(dropSprite);
+    }
+    private void updateEnemies(float delta) {
+        enemySpawnTimer += delta;
+
+
+        if (enemySpawnTimer >= enemySpawnInterval) {
+            enemySpawnTimer = 0;
+            spawnEnemy();
+
+
+            enemySpawnInterval = Math.max(1f, enemySpawnInterval * 0.95f);
+        }
+
+
+        for (int i = enemySprites.size - 1; i >= 0; i--) {
+            Sprite enemySprite = enemySprites.get(i);
+            enemySprite.translateY(-dropSpeed * delta);
+
+
+            if (enemySprite.getY() < -enemySprite.getHeight() || bucketRectangle.overlaps(enemySprite.getBoundingRectangle())) {
+                enemySprites.removeIndex(i);
+
+                // Дополнительная логика при столкновении с игроком
+                if (bucketRectangle.overlaps(enemySprite.getBoundingRectangle())) {
+                    missedDrops++;
+                    if (missedDrops >= maxMissedDrops) {
+                        gameOver();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    // Метод для создания нового врага
+    private void spawnEnemy() {
+        Sprite enemySprite = new Sprite(enemyTexture);
+        enemySprite.setSize(1, 1);
+        enemySprite.setX(MathUtils.random(0, viewport.getWorldWidth() - enemySprite.getWidth()));
+        enemySprite.setY(viewport.getWorldHeight());
+        enemySprites.add(enemySprite);
     }
 
     private void gameOver() {
@@ -238,9 +297,11 @@ public class GameScreen implements Screen {
         for (Texture texture : dropTexture) {
             texture.dispose();
         }
+        enemyTexture.dispose();
         music.dispose();
         dropSound.dispose();
         staminaIcon.dispose();
         font.dispose();
+
     }
 }
