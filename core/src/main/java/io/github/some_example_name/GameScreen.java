@@ -32,7 +32,7 @@ public class GameScreen implements Screen {
     final Drop game;
     private FitViewport viewport;
     int missedDrops = 0;
-    final int maxMissedDrops = 3;
+    final int maxMissedDrops = 6;
     private boolean isFacingRight = true;
     Texture backgroundTexture;
     Texture bucketTexture;
@@ -49,12 +49,18 @@ public class GameScreen implements Screen {
     BitmapFont font;
     Texture enemyTexture;
     Array<Sprite> enemySprites;
-    private float jumpForce = 5f;         // Сила прыжка
+    private float jumpForce = 6f;         // Сила прыжка
     private float gravity = -9.8f;        // Сила гравитации
     private boolean isJumping = false;    // Проверка, находится ли персонаж в прыжке
     private float verticalVelocity = 0f;  // Вертикальная скорость для прыжка
     float enemySpawnTimer = 0;
     float enemySpawnInterval = 20f;  // Начальная редкость появления противника
+    Array<Sprite> groundEnemies; // Список врагов, которые бегают по земле.
+    float groundEnemySpeed = 2f; // Скорость бегущих врагов.
+    float groundEnemySpawnTimer = 0; // Таймер появления врагов.
+    float groundEnemySpawnInterval = 5f; // Интервал появления врагов.
+    Texture groundEnemyTexture;
+
 
     public GameScreen(Drop game) {
         this.game = game;
@@ -68,6 +74,8 @@ public class GameScreen implements Screen {
             new Texture("egg_4.png"),
             new Texture("egg_5.png")
         };
+        groundEnemies = new Array<>();
+        groundEnemyTexture = new Texture("pituh.png");
         backgroundTexture = new Texture("Background.png");
         bucketTexture = new Texture("wolf.png");
         staminaIcon = new Texture("stamina.png");
@@ -196,8 +204,10 @@ public class GameScreen implements Screen {
             createDroplet();
         }
 
-        updateEnemies(delta);  // <-- Переносим вызов за пределы условия `if (dropTimer > 1f)`
+        updateEnemies(delta);
+        updateGroundEnemies(delta); // <-- Обновление бегущих врагов.
     }
+
 
 
     private void draw() {
@@ -219,13 +229,23 @@ public class GameScreen implements Screen {
         for (Sprite enemySprite : enemySprites) {
             enemySprite.draw(game.batch);
         }
+        for (Sprite groundEnemy : groundEnemies) {
+            groundEnemy.draw(game.batch);
+        }
+
 
         drawStaminaIcons();
         drawScore();
 
         game.batch.end();
     }
-
+    private Rectangle getGroundEnemyHitbox(Sprite groundEnemy) {
+        float hitboxWidth = groundEnemy.getWidth() * 0.7f;  // 70% ширины спрайта.
+        float hitboxHeight = groundEnemy.getHeight() * 0.5f; // 50% высоты спрайта.
+        float hitboxX = groundEnemy.getX() + (groundEnemy.getWidth() - hitboxWidth) / 2; // Центрируем хитбокс по ширине.
+        float hitboxY = groundEnemy.getY(); // По высоте хитбокс совпадает с основанием врага.
+        return new Rectangle(hitboxX, hitboxY, hitboxWidth, hitboxHeight);
+    }
     private void drawStaminaIcons() {
         float iconSize = 0.5f;
         float spacing = 0.3f;
@@ -289,6 +309,44 @@ public class GameScreen implements Screen {
             }
         }
     }
+    private void updateGroundEnemies(float delta) {
+        groundEnemySpawnTimer += delta;
+
+        if (groundEnemySpawnTimer >= groundEnemySpawnInterval) {
+            groundEnemySpawnTimer = 0;
+            spawnGroundEnemy();
+        }
+
+        for (int i = groundEnemies.size - 1; i >= 0; i--) {
+            GroundEnemy groundEnemy = (GroundEnemy) groundEnemies.get(i);
+
+            // Обновляем позицию в зависимости от направления
+            if (groundEnemy.isMovingRight()) {
+                groundEnemy.translateX(groundEnemySpeed * delta);
+            } else {
+                groundEnemy.translateX(-groundEnemySpeed * delta);
+            }
+
+            Rectangle groundEnemyHitbox = getGroundEnemyHitbox(groundEnemy);
+
+            // Проверяем столкновение с игроком
+            if (bucketRectangle.overlaps(groundEnemyHitbox)) {
+                groundEnemies.removeIndex(i);
+                missedDrops++;
+                if (missedDrops >= maxMissedDrops) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            // Удаляем врагов, которые вышли за пределы экрана
+            if (groundEnemy.isMovingRight() && groundEnemy.getX() > viewport.getWorldWidth() ||
+                !groundEnemy.isMovingRight() && groundEnemy.getX() < -groundEnemy.getWidth()) {
+                groundEnemies.removeIndex(i);
+            }
+        }
+    }
+
 
     // Метод для создания нового врага
     private void spawnEnemy() {
@@ -298,6 +356,24 @@ public class GameScreen implements Screen {
         enemySprite.setY(viewport.getWorldHeight());
         enemySprites.add(enemySprite);
     }
+    private void spawnGroundEnemy() {
+        boolean moveRight = MathUtils.randomBoolean(); // Случайное направление
+        GroundEnemy groundEnemy = new GroundEnemy(groundEnemyTexture, moveRight);
+
+        groundEnemy.setSize(1, 1);
+
+        if (moveRight) {
+            groundEnemy.setX(-groundEnemy.getWidth()); // Появляется за левым краем
+        } else {
+            groundEnemy.setX(viewport.getWorldWidth()); // Появляется за правым краем
+        }
+
+        groundEnemy.setY(0); // Уровень земли
+        groundEnemies.add(groundEnemy);
+    }
+
+
+
 
     private void gameOver() {
         music.stop();
@@ -325,6 +401,7 @@ public class GameScreen implements Screen {
         for (Texture texture : dropTexture) {
             texture.dispose();
         }
+        groundEnemyTexture.dispose();
         enemyTexture.dispose();
         music.dispose();
         dropSound.dispose();
