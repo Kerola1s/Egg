@@ -12,9 +12,10 @@ public class MainMenuScreen implements Screen {
     final Drop game;
     OrthographicCamera camera;
     Texture backgroundTexture;
+    private ScoreManager scoreManager;
     public MainMenuScreen(Drop drop) {
         this.game = drop;
-
+        scoreManager = new ScoreManager();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 500);
     }
@@ -30,28 +31,37 @@ public class MainMenuScreen implements Screen {
     }
 
     @Override
-    public void render(float v) {
+    public void render(float delta) {
         ScreenUtils.clear(0, 0, 0.2f, 1);
 
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
+
+        // Отрисовка фона
         game.batch.draw(backgroundTexture, 0, 0, camera.viewportWidth, camera.viewportHeight);
+
+        // Отрисовка кнопки
         game.batch.draw(buttonTexture, buttonX, buttonY, buttonWidth, buttonHeight);
-        game.font.draw(game.batch, "", 100, 150);
-        game.font.draw(game.batch, "", 100, 100);
+
+        // Отрисовка общего счёта
+        int totalScore = scoreManager.getTotalScore();
+        game.font.draw(game.batch, "Total Score: " + totalScore, 10, camera.viewportHeight - 30); // Отрисовка текста ниже
+
         game.batch.end();
+
+        // Проверка клика по кнопке
         if (Gdx.input.isTouched()) {
             float touchX = Gdx.input.getX();
             float touchY = Gdx.graphics.getHeight() - Gdx.input.getY(); // Инвертируем Y-координату
 
-            // Проверяем, нажата ли кнопка
             if (touchX >= buttonX && touchX <= buttonX + buttonWidth && touchY >= buttonY && touchY <= buttonY + buttonHeight) {
                 game.setScreen(new GameScreen(game)); // Переход на новый экран
                 dispose();
             }
-         }
-    }
+        }
+
+}
 
     @Override
     public void resize(int i, int i1) {

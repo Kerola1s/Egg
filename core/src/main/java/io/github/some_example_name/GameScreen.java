@@ -16,66 +16,59 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class GameScreen implements Screen {
-    float walkSpeed = 2f;
-    private float maxStamina = 5f;
-    private float currentStamina = maxStamina;
-    private float staminaRegen = 1f;
-    private float staminaUsage = 1f;
-    private boolean isRunning = false;
+    private static final float WALK_SPEED = 2f;
+    private static final float RUN_SPEED = 4f;
+    private static final float MAX_STAMINA = 5f;
+    private static final float STAMINA_REGEN = 1f;
+    private static final float STAMINA_USAGE = 1f;
+    private static final float JUMP_VELOCITY = 7f;
+    private static final float GRAVITY = -10.8f;
+    private static final int MAX_LIVES = 5;
 
-    final Drop game;
-    private FitViewport viewport;
-    private boolean isFacingRight = true;
-    Texture backgroundTexture;
-    Texture bucketTexture;
-    Sound dropSound;
-    Music music;
-    Texture staminaIcon;
-    Sprite bucketSprite;
-    Rectangle bucketRectangle;
-    int dropCount = 0;
-    BitmapFont font;
-    private int lives = 5;
-    private final int maxLives = 5;
-    private Texture lifeIcon;
-    private float jumpVelocity = 7f;
-    private float gravity = -10.8f;
+    private final Drop game;
+    private final FitViewport viewport;
+    private final BitmapFont font;
+    private final Texture backgroundTexture;
+    private final Texture bucketTexture;
+    private final Texture staminaIcon;
+    private final Texture lifeIcon;
+    private final Sound dropSound;
+    private final Music music;
+
+    private final Sprite bucketSprite;
+    private final Rectangle bucketRectangle;
+
+    private final DropManager dropManager;
+    private final EnemyManager enemyManager;
+    private final GroundEnemyManager groundEnemyManager;
+    private final Heal healManager;
+    private final ScoreManager scoreManager;
+
+    private float currentStamina = MAX_STAMINA;
     private float verticalVelocity = 0;
     private boolean isJumping = false;
-
-    EnemyManager enemyManager;
-    GroundEnemyManager groundEnemyManager;
-    Heal healManager;
-    DropManager dropManager;
+    private boolean isRunning = false;
+    private boolean isFacingRight = true;
+    private int lives = MAX_LIVES;
+    private int currentScore = 0;
 
     public GameScreen(Drop game) {
         this.game = game;
+        this.viewport = new FitViewport(8, 5);
 
-        viewport = new FitViewport(8, 5);
+        this.backgroundTexture = new Texture("Background.png");
+        this.bucketTexture = new Texture("wolf.png");
+        this.staminaIcon = new Texture("stamina.png");
+        this.lifeIcon = new Texture("hear.png");
+        this.dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
+        this.music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
+        this.font = new BitmapFont();
 
-        backgroundTexture = new Texture("Background.png");
-        bucketTexture = new Texture("wolf.png");
-        staminaIcon = new Texture("stamina.png");
-        dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
-        music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
-        bucketSprite = new Sprite(bucketTexture);
-        bucketSprite.setSize(2, 2);
-        bucketRectangle = new Rectangle();
+        this.bucketSprite = new Sprite(bucketTexture);
+        this.bucketSprite.setSize(2, 2);
+        this.bucketRectangle = new Rectangle();
 
-        enemyManager = new EnemyManager(new Texture("Bimba.png"), viewport);
-        groundEnemyManager = new GroundEnemyManager(new Texture("pituh.png"), viewport);
-
-        music.setLooping(true);
-        music.setVolume(.5f);
-        music.play();
-
-        font = new BitmapFont();
-        font.setColor(Color.WHITE);
-        font.getData().setScale(3f);
-        lifeIcon = new Texture("hear.png");
-        healManager = new Heal(new Texture("heal.png"), viewport);
-
-        dropManager = new DropManager(
+        this.dropManager = new DropManager(
             new Texture[]{
                 new Texture("egg_1.png"),
                 new Texture("egg_2.png"),
@@ -86,6 +79,17 @@ public class GameScreen implements Screen {
             new Texture("golden-egg.png"),
             viewport
         );
+        this.enemyManager = new EnemyManager(new Texture("Bimba.png"), viewport);
+        this.groundEnemyManager = new GroundEnemyManager(new Texture("pituh.png"), viewport);
+        this.healManager = new Heal(new Texture("heal.png"), viewport);
+        this.scoreManager = new ScoreManager();
+
+        music.setLooping(true);
+        music.setVolume(0.5f);
+        music.play();
+
+        font.setColor(Color.WHITE);
+        font.getData().setScale(3f);
     }
 
     @Override
@@ -93,113 +97,78 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        input();
-        logic(delta);
-        draw();
+        handleInput(delta);
+        updateGameLogic(delta);
+        drawGame();
     }
 
-    private void input() {
-        float speed = walkSpeed;
-        float runSpeed = 4f;
+    private void handleInput(float delta) {
+        float speed = WALK_SPEED;
 
+        // Определяем скорость: бег или ходьба
         if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) && currentStamina > 0) {
-            speed = runSpeed;
-            currentStamina -= staminaUsage * Gdx.graphics.getDeltaTime();
-            if (currentStamina <= 0) {
-                currentStamina = 0;
-                isRunning = false;
-                speed = walkSpeed;
-            } else {
-                isRunning = true;
-            }
+            speed = RUN_SPEED;
+            currentStamina -= STAMINA_USAGE * delta;
+            isRunning = true;
         } else {
             isRunning = false;
-            if (currentStamina < maxStamina) {
-                currentStamina += staminaRegen * Gdx.graphics.getDeltaTime();
-                if (currentStamina > maxStamina) {
-                    currentStamina = maxStamina;
-                }
-            }
+            currentStamina = Math.min(currentStamina + STAMINA_REGEN * delta, MAX_STAMINA);
         }
 
-        currentStamina = MathUtils.clamp(currentStamina, 0, maxStamina);
-
+        // Движение вправо (теперь инверсия: спрайт переворачивается влево)
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
-            if (isFacingRight) {
+            if (isFacingRight) { // Инверсия: был "вправо", теперь "влево"
                 bucketSprite.flip(true, false);
                 isFacingRight = false;
             }
-            bucketSprite.translateX(speed * Gdx.graphics.getDeltaTime());
+            bucketSprite.translateX(speed * delta);
         }
 
+        // Движение влево (теперь инверсия: спрайт переворачивается вправо)
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
-            if (!isFacingRight) {
+            if (!isFacingRight) { // Инверсия: был "влево", теперь "вправо"
                 bucketSprite.flip(true, false);
                 isFacingRight = true;
             }
-            bucketSprite.translateX(-speed * Gdx.graphics.getDeltaTime());
+            bucketSprite.translateX(-speed * delta);
         }
+
+        // Прыжок
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !isJumping) {
-            verticalVelocity = jumpVelocity;
+            verticalVelocity = JUMP_VELOCITY;
             isJumping = true;
         }
     }
 
-    private void logic(float delta) {
-        float worldWidth = viewport.getWorldWidth();
-        float bucketWidth = bucketSprite.getWidth();
 
-        // Обновление позиции корзины
-        bucketSprite.setX(MathUtils.clamp(
-            bucketSprite.getX(),
-            0,
-            worldWidth - bucketWidth
-        ));
+
+    private void updateGameLogic(float delta) {
         bucketRectangle.set(
             bucketSprite.getX(),
             bucketSprite.getY(),
-            bucketWidth,
+            bucketSprite.getWidth(),
             bucketSprite.getHeight()
         );
 
-        // Обновление капель и проверка коллизий
         dropManager.update(delta, bucketRectangle);
-
         Sprite caughtDrop = dropManager.getCaughtDrop(bucketRectangle);
         if (caughtDrop != null) {
-            dropCount += dropManager.getScoreForTexture(caughtDrop.getTexture());
-            Gdx.app.log("Score", "Score: " + dropCount);
+            int score = dropManager.getScoreForTexture(caughtDrop.getTexture());
+            currentScore += score;
+            scoreManager.addToTotalScore(score);
             dropSound.play();
         }
 
-        // Проверяем здоровье, коллизии и прочие игровые состояния
         healManager.update(delta, bucketRectangle, () -> {
-            if (lives < maxLives) {
+            if (lives < MAX_LIVES) {
                 lives++;
             }
         });
 
-        healManager.update(delta, bucketRectangle, () -> {
-            if (lives < maxLives) {
-                lives++;
-            }
-        });
+        enemyManager.updateEnemies(delta, bucketRectangle, this::reduceLife);
+        groundEnemyManager.updateGroundEnemies(delta, bucketRectangle, this::reduceLife);
 
-        enemyManager.updateEnemies(delta, bucketRectangle, () -> {
-            lives--;
-            if (lives <= 0) {
-                gameOver();
-            }
-        });
-
-        groundEnemyManager.updateGroundEnemies(delta, bucketRectangle, () -> {
-            lives--;
-            if (lives <= 0) {
-                gameOver();
-            }
-        });
-
-        verticalVelocity += gravity * delta;
+        verticalVelocity += GRAVITY * delta;
         bucketSprite.translateY(verticalVelocity * delta);
 
         if (bucketSprite.getY() <= 0) {
@@ -207,57 +176,52 @@ public class GameScreen implements Screen {
             verticalVelocity = 0;
             isJumping = false;
         }
+
+        bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, viewport.getWorldWidth() - bucketSprite.getWidth()));
     }
 
-    private void draw() {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        ScreenUtils.clear(Color.BLACK);
+    private void drawGame() {
+        ScreenUtils.clear(0, 0, 0.2f, 1);
 
         viewport.apply();
         game.batch.setProjectionMatrix(viewport.getCamera().combined);
         game.batch.begin();
 
-        float worldWidth = viewport.getWorldWidth();
-        float worldHeight = viewport.getWorldHeight();
-        game.batch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
+        game.batch.draw(backgroundTexture, 0, 0, viewport.getWorldWidth(), viewport.getWorldHeight());
         bucketSprite.draw(game.batch);
-
         dropManager.draw(game.batch);
         enemyManager.drawEnemies(game.batch);
         groundEnemyManager.drawGroundEnemies(game.batch);
-
-        drawStaminaIcons();
-        drawScore();
-        drawLives();
         healManager.draw(game.batch);
+
+        drawUI();
 
         game.batch.end();
     }
 
-    private void drawStaminaIcons() {
+    private void drawUI() {
         float iconSize = 0.5f;
         float spacing = 0.3f;
-        int numIcons = (int) Math.ceil(currentStamina);
-        for (int i = 0; i < numIcons; i++) {
+
+        // Draw stamina
+        for (int i = 0; i < Math.ceil(currentStamina); i++) {
             game.batch.draw(staminaIcon, viewport.getWorldWidth() - (iconSize + spacing) * (i + 1), viewport.getWorldHeight() - iconSize, iconSize, iconSize);
         }
-    }
 
-    private void drawLives() {
-        float iconSize = 0.5f;
-        float spacing = 0.3f;
+        // Draw lives
         for (int i = 0; i < lives; i++) {
             game.batch.draw(lifeIcon, spacing + i * (iconSize + spacing), viewport.getWorldHeight() - iconSize - spacing, iconSize, iconSize);
         }
+
+        // Draw score
+        font.draw(game.batch, "Score: " + currentScore, 10, viewport.getWorldHeight() - 10);
     }
 
-    private void drawScore() {
-        float worldHeight = viewport.getWorldHeight();
-        font.setColor(Color.BLACK);
-        font.getData().setScale(0.2f);
-        font.draw(game.batch, "Stamina: " + (int) currentStamina, 10, worldHeight - 20);
-        font.draw(game.batch, "Поймано капель: " + dropCount, 10, worldHeight - 60);
+    private void reduceLife() {
+        lives--;
+        if (lives <= 0) {
+            gameOver();
+        }
     }
 
     private void gameOver() {
