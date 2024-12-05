@@ -58,7 +58,7 @@ public class GameScreen implements Screen {
         this.backgroundTexture = new Texture("GameBG.png");
         this.bucketTexture = new Texture("wolf.png");
         this.staminaIcon = new Texture("stamina.png");
-        this.lifeIcon = new Texture("hear.png");
+        this.lifeIcon = new Texture("НР.png");
         this.music = Gdx.audio.newMusic(Gdx.files.internal("Music.mp3"));
         this.font = new BitmapFont();
 
@@ -89,7 +89,7 @@ public class GameScreen implements Screen {
         );
         this.enemyManager = new EnemyManager(new Texture("FallEnemy.png"), viewport);
         this.groundEnemyManager = new GroundEnemyManager(new Texture("Enemy.png"), viewport);
-        this.healManager = new Heal(new Texture("HP.png"), viewport);
+        this.healManager = new Heal(new Texture("heal.png"), viewport);
         this.scoreManager = new ScoreManager();
 
         music.setLooping(true);

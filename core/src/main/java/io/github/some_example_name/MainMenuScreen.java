@@ -9,8 +9,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 public class MainMenuScreen implements Screen {
-    Texture buttonTexture;
-    float buttonX, buttonY, buttonWidth, buttonHeight;
+    Texture playButtonTexture;
+    Texture exitButtonTexture;
+    float playButtonX, playButtonY, playButtonWidth, playButtonHeight;
+    float exitButtonX, exitButtonY, exitButtonWidth, exitButtonHeight;
     final Drop game;
     OrthographicCamera camera;
     Texture backgroundTexture;
@@ -29,13 +31,19 @@ public class MainMenuScreen implements Screen {
     public void show() {
         // Загрузка текстур
         backgroundTexture = new Texture("BackgroundMenu.png");
-        buttonTexture = new Texture("Button1.png");
+        playButtonTexture = new Texture("Button1.png");
+        exitButtonTexture = new Texture("Button5.png");
 
-        // Установка размеров кнопки
-        buttonWidth = 200;
-        buttonHeight = 150;
-        buttonX = Gdx.graphics.getWidth() / 2 - buttonWidth / 2 - 250;
-        buttonY = Gdx.graphics.getHeight() / 2 - buttonHeight / 2 - 150;
+        // Установка размеров и позиций кнопок
+        playButtonWidth = 200;
+        playButtonHeight = 150;
+        playButtonX = Gdx.graphics.getWidth() / 2 - playButtonWidth / 2 - 250;
+        playButtonY = Gdx.graphics.getHeight() / 2 - playButtonHeight / 2 - 150;
+
+        exitButtonWidth = 50; // Уменьшенная ширина кнопки выхода
+        exitButtonHeight = 50; // Уменьшенная высота кнопки выхода
+        exitButtonX = Gdx.graphics.getWidth() - exitButtonWidth - 10; // Смещение от правого края экрана
+        exitButtonY = Gdx.graphics.getHeight() - exitButtonHeight - 10; // Смещение от верхнего края экрана
 
         // Загрузка фоновой музыки и звука кнопки
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("MainTheme.mp3"));
@@ -58,8 +66,9 @@ public class MainMenuScreen implements Screen {
         // Отрисовка фона
         game.batch.draw(backgroundTexture, 0, 0, camera.viewportWidth, camera.viewportHeight);
 
-        // Отрисовка кнопки
-        game.batch.draw(buttonTexture, buttonX, buttonY, buttonWidth, buttonHeight);
+        // Отрисовка кнопок
+        game.batch.draw(playButtonTexture, playButtonX, playButtonY, playButtonWidth, playButtonHeight);
+        game.batch.draw(exitButtonTexture, exitButtonX, exitButtonY, exitButtonWidth, exitButtonHeight);
 
         // Отрисовка общего счёта
         int totalScore = scoreManager.getTotalScore();
@@ -67,43 +76,45 @@ public class MainMenuScreen implements Screen {
 
         game.batch.end();
 
-        // Проверка клика по кнопке
+        // Проверка клика по кнопкам
         if (Gdx.input.isTouched()) {
             float touchX = Gdx.input.getX();
             float touchY = Gdx.graphics.getHeight() - Gdx.input.getY(); // Инвертируем Y-координату
 
-            if (touchX >= buttonX && touchX <= buttonX + buttonWidth && touchY >= buttonY && touchY <= buttonY + buttonHeight) {
+            // Проверка нажатия кнопки "Играть"
+            if (touchX >= playButtonX && touchX <= playButtonX + playButtonWidth &&
+                touchY >= playButtonY && touchY <= playButtonY + playButtonHeight) {
                 buttonSound.play(); // Воспроизведение звука кнопки
                 game.setScreen(new GameScreen(game)); // Переход на новый экран
                 dispose();
+            }
+
+            // Проверка нажатия кнопки "Выход"
+            if (touchX >= exitButtonX && touchX <= exitButtonX + exitButtonWidth &&
+                touchY >= exitButtonY && touchY <= exitButtonY + exitButtonHeight) {
+                buttonSound.play(); // Воспроизведение звука кнопки
+                Gdx.app.exit(); // Завершение игры
             }
         }
     }
 
     @Override
-    public void resize(int i, int i1) {
-
-    }
+    public void resize(int width, int height) {}
 
     @Override
-    public void pause() {
-
-    }
+    public void pause() {}
 
     @Override
-    public void resume() {
-
-    }
+    public void resume() {}
 
     @Override
-    public void hide() {
-
-    }
+    public void hide() {}
 
     @Override
     public void dispose() {
         // Освобождение ресурсов
-        buttonTexture.dispose();
+        playButtonTexture.dispose();
+        exitButtonTexture.dispose();
         backgroundTexture.dispose();
         backgroundMusic.dispose();
         buttonSound.dispose();

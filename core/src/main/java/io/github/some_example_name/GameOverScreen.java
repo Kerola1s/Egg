@@ -4,24 +4,19 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class GameOverScreen implements Screen {
     final Drop game;
     Texture backgroundTexture;
+    Texture restartButtonTexture;
+    Texture mainMenuButtonTexture;
     OrthographicCamera camera;
-    Music GM;
+    Music gameOverMusic;
+
+    float restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight;
+    float mainMenuButtonX, mainMenuButtonY, mainMenuButtonWidth, mainMenuButtonHeight;
 
     public GameOverScreen(Drop game) {
         this.game = game;
@@ -32,10 +27,26 @@ public class GameOverScreen implements Screen {
     @Override
     public void show() {
         backgroundTexture = new Texture("GameOverScreen.png");
-        GM = Gdx.audio.newMusic(Gdx.files.internal("pogodi.mp3"));
-        GM .setLooping(false);
-        GM .setVolume(750f);
-        GM .play();
+        restartButtonTexture = new Texture("Button2.png");
+        mainMenuButtonTexture = new Texture("Button5.png");
+
+        // Позиции и размеры кнопки "Рестарт"
+        restartButtonWidth = 150;
+        restartButtonHeight = 60;
+        restartButtonX = Gdx.graphics.getWidth() / 2 - restartButtonWidth / 2;
+        restartButtonY = Gdx.graphics.getHeight() / 2 - restartButtonHeight - 20;
+
+        // Позиции и размеры кнопки "Главное меню"
+        mainMenuButtonWidth = 150;
+        mainMenuButtonHeight = 60;
+        mainMenuButtonX = Gdx.graphics.getWidth() / 2 - mainMenuButtonWidth / 2;
+        mainMenuButtonY = restartButtonY - mainMenuButtonHeight - 20;
+
+        // Загрузка музыки
+        gameOverMusic = Gdx.audio.newMusic(Gdx.files.internal("pogodi.mp3"));
+        gameOverMusic.setLooping(false);
+        gameOverMusic.setVolume(0.5f);
+        gameOverMusic.play();
     }
 
     @Override
@@ -46,19 +57,34 @@ public class GameOverScreen implements Screen {
 
         game.batch.begin();
 
-        // Отрисовываем фон, подгоняя его под размеры камеры
+        // Отрисовка фона
         game.batch.draw(backgroundTexture, 0, 0, camera.viewportWidth, camera.viewportHeight);
 
-        // Проверка нажатия любой клавиши и клика
-        if (Gdx.input.isKeyJustPressed(Keys.ANY_KEY)) {
-            game.setScreen(new MainMenuScreen(game));  // Переход в главное меню по нажатию клавиши
-        } else if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            game.setScreen(new MainMenuScreen(game));  // Переход в главное меню по нажатию левой кнопки мыши
-        }else if (Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {
-            game.setScreen(new MainMenuScreen(game));  // Переход в главное меню по нажатию правой кнопки мыши
-        }
+        // Отрисовка кнопок
+        game.batch.draw(restartButtonTexture, restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight);
+        game.batch.draw(mainMenuButtonTexture, mainMenuButtonX, mainMenuButtonY, mainMenuButtonWidth, mainMenuButtonHeight);
 
-        game.batch.end();  // Завершаем отрисовку
+        game.batch.end();
+
+        // Проверка кликов по кнопкам
+        if (Gdx.input.isTouched()) {
+            float touchX = Gdx.input.getX();
+            float touchY = Gdx.graphics.getHeight() - Gdx.input.getY(); // Инвертируем Y-координату
+
+            // Если нажали на кнопку "Рестарт"
+            if (touchX >= restartButtonX && touchX <= restartButtonX + restartButtonWidth &&
+                touchY >= restartButtonY && touchY <= restartButtonY + restartButtonHeight) {
+                game.setScreen(new GameScreen(game)); // Переход на игровой экран
+                dispose();
+            }
+
+            // Если нажали на кнопку "Главное меню"
+            if (touchX >= mainMenuButtonX && touchX <= mainMenuButtonX + mainMenuButtonWidth &&
+                touchY >= mainMenuButtonY && touchY <= mainMenuButtonY + mainMenuButtonHeight) {
+                game.setScreen(new MainMenuScreen(game)); // Переход на экран главного меню
+                dispose();
+            }
+        }
     }
 
     @Override
@@ -67,22 +93,20 @@ public class GameOverScreen implements Screen {
     }
 
     @Override
-    public void pause() {
-
-    }
+    public void pause() {}
 
     @Override
-    public void resume() {
-
-    }
+    public void resume() {}
 
     @Override
-    public void hide() {
-
-    }
+    public void hide() {}
 
     @Override
     public void dispose() {
-        backgroundTexture.dispose();  // Освобождаем ресурсы
+        // Освобождение ресурсов
+        backgroundTexture.dispose();
+        restartButtonTexture.dispose();
+        mainMenuButtonTexture.dispose();
+        gameOverMusic.dispose();
     }
 }

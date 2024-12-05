@@ -36,12 +36,23 @@ public class EnemyManager {
 
             if (enemy.getY() + enemy.getHeight() < 0) {
                 enemies.removeIndex(i); // Удаляем врагов, упавших за экран
-            } else if (enemy.getBoundingRectangle().overlaps(playerRectangle)) {
-                enemies.removeIndex(i);
-                onPlayerHit.run(); // Уведомляем о попадании врага в игрока
+            } else {
+                // Создаем уменьшенный хитбокс
+                Rectangle hitbox = new Rectangle(
+                    enemy.getX() + enemy.getWidth() * 0.2f, // Сдвигаем влево
+                    enemy.getY() + enemy.getHeight() * 0.2f, // Сдвигаем вниз
+                    enemy.getWidth() * 0.6f, // Уменьшаем ширину
+                    enemy.getHeight() * 0.6f // Уменьшаем высоту
+                );
+
+                if (hitbox.overlaps(playerRectangle)) {
+                    enemies.removeIndex(i);
+                    onPlayerHit.run(); // Уведомляем о попадании врага в игрока
+                }
             }
         }
     }
+
 
     public void drawEnemies(Batch batch) {
         for (Sprite enemy : enemies) {
