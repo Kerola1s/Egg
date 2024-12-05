@@ -32,7 +32,6 @@ public class GameScreen implements Screen {
     private final Texture bucketTexture;
     private final Texture staminaIcon;
     private final Texture lifeIcon;
-    private final Sound dropSound;
     private final Music music;
 
     private final Sprite bucketSprite;
@@ -60,8 +59,7 @@ public class GameScreen implements Screen {
         this.bucketTexture = new Texture("wolf.png");
         this.staminaIcon = new Texture("stamina.png");
         this.lifeIcon = new Texture("hear.png");
-        this.dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
-        this.music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
+        this.music = Gdx.audio.newMusic(Gdx.files.internal("Music.mp3"));
         this.font = new BitmapFont();
 
         this.bucketSprite = new Sprite(bucketTexture);
@@ -160,13 +158,13 @@ public class GameScreen implements Screen {
             bucketSprite.getHeight()
         );
 
-        dropManager.update(delta, bucketRectangle);
+        dropManager.update(delta, bucketRectangle, this::reduceLife);
         Sprite caughtDrop = dropManager.getCaughtDrop(bucketRectangle);
         if (caughtDrop != null) {
             int score = dropManager.getScoreForTexture(caughtDrop.getTexture());
             currentScore += score;
             scoreManager.addToTotalScore(score);
-            dropSound.play();
+            // Проигрываем звук
         }
 
         healManager.update(delta, bucketRectangle, () -> {
@@ -261,7 +259,6 @@ public class GameScreen implements Screen {
         enemyManager.dispose();
         groundEnemyManager.dispose();
         music.dispose();
-        dropSound.dispose();
         staminaIcon.dispose();
         font.dispose();
         lifeIcon.dispose();

@@ -1,6 +1,7 @@
 package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -19,6 +20,7 @@ public class DropManager {
     private final Viewport viewport;
     private final Map<Texture, Integer> eggScores;
     private final Map<Texture, Float> eggSpawnRates;
+    private Sound dropSound;
 
     private float dropTimer;
     private float spawnInterval = 3f; // Начальный интервал спавна
@@ -30,7 +32,7 @@ public class DropManager {
         this.viewport = viewport;
         this.drops = new Array<>();
         this.dropTimer = 0;
-
+        this.dropSound = Gdx.audio.newSound(Gdx.files.internal("CatchEggSound.mp3"));
         // Устанавливаем стоимость для всех 15 яиц
         eggScores = new HashMap<>();
         for (int i = 0; i < 5; i++) eggScores.put(dropTextures[i], MathUtils.random(50, 100)); // Дешевые
@@ -51,7 +53,7 @@ public class DropManager {
         eggSpawnRates.put(goldenEggTexture, 0.01f); // Золотое яйцо — самое редкое
     }
 
-    public void update(float delta, Rectangle bucketRectangle) {
+    public void update(float delta, Rectangle bucketRectangle, Runnable onMissedDrop) {
         dropTimer += delta;
 
         // Постепенное уменьшение интервала спавна и увеличение скорости
@@ -72,12 +74,12 @@ public class DropManager {
             if (drop.getY() < -drop.getHeight()) {
                 drops.removeIndex(i); // Удаляем каплю, если она ушла за экран
                 Gdx.app.log("DropManager", "Яйцо пропущено!");
+                onMissedDrop.run(); // Уведомляем о пропуске
             } else if (drop.getBoundingRectangle().overlaps(bucketRectangle)) {
                 // Проверяем на пересечение с корзиной
                 Gdx.app.log("DropManager", "Яйцо поймано!");
-                int score = getScoreForTexture(drop.getTexture());
-                Gdx.app.log("Score", "Текущий счёт: " + score);
                 drops.removeIndex(i); // Удаляем пойманное яйцо
+                dropSound.play();
             }
         }
     }
@@ -104,6 +106,7 @@ public class DropManager {
             texture.dispose();
         }
         goldenEggTexture.dispose();
+        dropSound.dispose();
     }
 
     private void spawnDrop() {
