@@ -56,7 +56,7 @@ public class GameScreen implements Screen {
         this.game = game;
         this.viewport = new FitViewport(8, 5);
 
-        this.backgroundTexture = new Texture("Background.png");
+        this.backgroundTexture = new Texture("GameBG.png");
         this.bucketTexture = new Texture("wolf.png");
         this.staminaIcon = new Texture("stamina.png");
         this.lifeIcon = new Texture("hear.png");
@@ -70,11 +70,21 @@ public class GameScreen implements Screen {
 
         this.dropManager = new DropManager(
             new Texture[]{
-                new Texture("egg_1.png"),
-                new Texture("egg_2.png"),
-                new Texture("egg_3.png"),
-                new Texture("egg_4.png"),
-                new Texture("egg_5.png")
+                new Texture("Egg1.png"),
+                new Texture("Egg2.png"),
+                new Texture("Egg3.png"),
+                new Texture("Egg4.png"),
+                new Texture("Egg5.png"),
+                new Texture("Egg6.png"),
+                new Texture("Egg7.png"),
+                new Texture("Egg8.png"),
+                new Texture("Egg9.png"),
+                new Texture("Egg10.png"),
+                new Texture("Egg11.png"),
+                new Texture("Egg12.png"),
+                new Texture("Egg13.png"),
+                new Texture("Egg14.png"),
+                new Texture("Egg15.png")
             },
             new Texture("golden-egg.png"),
             viewport

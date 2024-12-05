@@ -21,7 +21,8 @@ public class DropManager {
     private final Map<Texture, Float> eggSpawnRates;
 
     private float dropTimer;
-    private float spawnInterval = 1f; // Базовый интервал спавна
+    private float spawnInterval = 3f; // Начальный интервал спавна
+    private float dropSpeed = 1f; // Начальная скорость падения
 
     public DropManager(Texture[] dropTextures, Texture goldenEggTexture, Viewport viewport) {
         this.dropTextures = dropTextures;
@@ -30,27 +31,32 @@ public class DropManager {
         this.drops = new Array<>();
         this.dropTimer = 0;
 
-        // Устанавливаем стоимость яиц
+        // Устанавливаем стоимость для всех 15 яиц
         eggScores = new HashMap<>();
-        eggScores.put(dropTextures[0], 100);
-        eggScores.put(dropTextures[1], 150);
-        eggScores.put(dropTextures[2], 90);
-        eggScores.put(dropTextures[3], 200);
-        eggScores.put(dropTextures[4], 110);
-        eggScores.put(goldenEggTexture, 2500);
+        for (int i = 0; i < 5; i++) eggScores.put(dropTextures[i], MathUtils.random(50, 100)); // Дешевые
+        for (int i = 5; i < 10; i++) eggScores.put(dropTextures[i], MathUtils.random(150, 250)); // Средние
+        for (int i = 10; i < 13; i++) eggScores.put(dropTextures[i], MathUtils.random(500, 700)); // Дорогие
+        eggScores.put(dropTextures[13], 2000); // Очень дорогие
+        eggScores.put(dropTextures[14], 5000); // Очень дорогие
 
-        // Устанавливаем редкость яиц
+        eggScores.put(goldenEggTexture, 5000);
+
+        // Устанавливаем редкость для всех 15 яиц
         eggSpawnRates = new HashMap<>();
-        eggSpawnRates.put(dropTextures[0], 0.4f); // Чаще всего
-        eggSpawnRates.put(dropTextures[1], 0.3f);
-        eggSpawnRates.put(dropTextures[2], 0.2f);
-        eggSpawnRates.put(dropTextures[3], 0.1f);
-        eggSpawnRates.put(dropTextures[4], 0.15f);
-        eggSpawnRates.put(goldenEggTexture, 0.05f); // Очень редко
+        for (int i = 0; i < 5; i++) eggSpawnRates.put(dropTextures[i], 0.4f); // Дешевые чаще всего
+        for (int i = 5; i < 10; i++) eggSpawnRates.put(dropTextures[i], 0.3f); // Средние
+        for (int i = 10; i < 13; i++) eggSpawnRates.put(dropTextures[i], 0.15f); // Дорогие
+        eggSpawnRates.put(dropTextures[13], 0.05f); // Очень редкие
+        eggSpawnRates.put(dropTextures[14], 0.02f); // Очень редкие
+        eggSpawnRates.put(goldenEggTexture, 0.01f); // Золотое яйцо — самое редкое
     }
 
     public void update(float delta, Rectangle bucketRectangle) {
         dropTimer += delta;
+
+        // Постепенное уменьшение интервала спавна и увеличение скорости
+        if (spawnInterval > 1f) spawnInterval -= delta * 0.01f;
+        dropSpeed += delta * 0.02f;
 
         // Спавн новых капель
         if (dropTimer > spawnInterval) {
@@ -61,7 +67,7 @@ public class DropManager {
         // Обновление капель
         for (int i = drops.size - 1; i >= 0; i--) {
             Sprite drop = drops.get(i);
-            drop.translateY(-2f * delta); // Скорость падения яйца
+            drop.translateY(-dropSpeed * delta); // Скорость падения яйца
 
             if (drop.getY() < -drop.getHeight()) {
                 drops.removeIndex(i); // Удаляем каплю, если она ушла за экран
@@ -76,7 +82,11 @@ public class DropManager {
         }
     }
 
-
+    public void draw(SpriteBatch batch) {
+        for (Sprite drop : drops) {
+            drop.draw(batch);
+        }
+    }
     public Sprite getCaughtDrop(Rectangle bucketRectangle) {
         for (int i = drops.size - 1; i >= 0; i--) {
             Sprite drop = drops.get(i);
@@ -88,11 +98,6 @@ public class DropManager {
         return null;
     }
 
-    public void draw(SpriteBatch batch) {
-        for (Sprite drop : drops) {
-            drop.draw(batch);
-        }
-    }
 
     public void dispose() {
         for (Texture texture : dropTextures) {
@@ -106,7 +111,7 @@ public class DropManager {
         Texture selectedTexture = getRandomDropTexture();
 
         Sprite drop = new Sprite(selectedTexture);
-        drop.setSize(1, 1);
+        drop.setSize(0.5f, 0.5f); // Уменьшаем размер спрайтов
         drop.setPosition(MathUtils.random(0, worldWidth - drop.getWidth()), viewport.getWorldHeight());
         drops.add(drop);
     }
