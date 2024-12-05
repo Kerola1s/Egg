@@ -31,7 +31,7 @@ public class GameOverScreen implements Screen {
 
     @Override
     public void show() {
-        backgroundTexture = new Texture("chiken.png");
+        backgroundTexture = new Texture("GameOverScreen.png");
         GM = Gdx.audio.newMusic(Gdx.files.internal("pogodi.mp3"));
         GM .setLooping(false);
         GM .setVolume(750f);

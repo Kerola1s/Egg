@@ -87,9 +87,9 @@ public class GameScreen implements Screen {
             new Texture("golden-egg.png"),
             viewport
         );
-        this.enemyManager = new EnemyManager(new Texture("Bimba.png"), viewport);
-        this.groundEnemyManager = new GroundEnemyManager(new Texture("pituh.png"), viewport);
-        this.healManager = new Heal(new Texture("heal.png"), viewport);
+        this.enemyManager = new EnemyManager(new Texture("FallEnemy.png"), viewport);
+        this.groundEnemyManager = new GroundEnemyManager(new Texture("Enemy.png"), viewport);
+        this.healManager = new Heal(new Texture("HP.png"), viewport);
         this.scoreManager = new ScoreManager();
 
         music.setLooping(true);

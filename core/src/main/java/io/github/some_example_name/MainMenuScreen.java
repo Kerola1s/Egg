@@ -29,7 +29,7 @@ public class MainMenuScreen implements Screen {
     public void show() {
         // Загрузка текстур
         backgroundTexture = new Texture("BackgroundMenu.png");
-        buttonTexture = new Texture("button.png");
+        buttonTexture = new Texture("Button1.png");
 
         // Установка размеров кнопки
         buttonWidth = 200;
