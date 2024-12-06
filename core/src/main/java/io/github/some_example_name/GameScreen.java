@@ -14,6 +14,10 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
 
 public class GameScreen implements Screen {
     private static final float WALK_SPEED = 2f;
@@ -24,6 +28,11 @@ public class GameScreen implements Screen {
     private static final float JUMP_VELOCITY = 7f;
     private static final float GRAVITY = -10.8f;
     private static final int MAX_LIVES = 5;
+    // Переменные для анимации
+    private Animation<TextureRegion> walkAnimation;
+    private Animation<TextureRegion> idleAnimation;
+    private Animation<TextureRegion> currentAnimation;
+    private float animationTime = 0f;
 
     private final Drop game;
     private final FitViewport viewport;
@@ -98,6 +107,19 @@ public class GameScreen implements Screen {
 
         font.setColor(Color.WHITE);
         font.getData().setScale(3f);
+        Texture wolfSheet = new Texture("sprite.png");
+        TextureRegion[][] frames = TextureRegion.split(wolfSheet, wolfSheet.getWidth() / 2, wolfSheet.getHeight() / 2); // 3 кадра в строке, 2 строки
+
+
+        walkAnimation = new Animation<>(0.1f, frames[0]);
+        walkAnimation.setPlayMode(Animation.PlayMode.LOOP);
+
+
+        Texture idleTexture = new Texture("wolf2.png");
+        idleAnimation = new Animation<>(1f, new TextureRegion(idleTexture));
+        idleAnimation.setPlayMode(Animation.PlayMode.LOOP);
+
+        currentAnimation = idleAnimation;
     }
 
     @Override
@@ -113,7 +135,6 @@ public class GameScreen implements Screen {
     private void handleInput(float delta) {
         float speed = WALK_SPEED;
 
-        // Определяем скорость: бег или ходьба
         if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) && currentStamina > 0) {
             speed = RUN_SPEED;
             currentStamina -= STAMINA_USAGE * delta;
@@ -123,30 +144,30 @@ public class GameScreen implements Screen {
             currentStamina = Math.min(currentStamina + STAMINA_REGEN * delta, MAX_STAMINA);
         }
 
-        // Движение вправо (теперь инверсия: спрайт переворачивается влево)
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
-            if (isFacingRight) { // Инверсия: был "вправо", теперь "влево"
-                bucketSprite.flip(true, false);
-                isFacingRight = false;
-            }
-            bucketSprite.translateX(speed * delta);
-        }
-
-        // Движение влево (теперь инверсия: спрайт переворачивается вправо)
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
-            if (!isFacingRight) { // Инверсия: был "влево", теперь "вправо"
+            if (!isFacingRight) {
                 bucketSprite.flip(true, false);
                 isFacingRight = true;
             }
+            bucketSprite.translateX(speed * delta);
+            currentAnimation = walkAnimation; // Включаем анимацию ходьбы
+        } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
+            if (isFacingRight) {
+                bucketSprite.flip(true, false);
+                isFacingRight = false;
+            }
             bucketSprite.translateX(-speed * delta);
+            currentAnimation = walkAnimation; // Включаем анимацию ходьбы
+        } else {
+            currentAnimation = idleAnimation; // Персонаж стоит
         }
 
-        // Прыжок
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !isJumping) {
             verticalVelocity = JUMP_VELOCITY;
             isJumping = true;
         }
     }
+
 
 
 
@@ -186,6 +207,8 @@ public class GameScreen implements Screen {
         }
 
         bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, viewport.getWorldWidth() - bucketSprite.getWidth()));
+        animationTime += delta;
+
     }
 
     private void drawGame() {
@@ -196,7 +219,11 @@ public class GameScreen implements Screen {
         game.batch.begin();
 
         game.batch.draw(backgroundTexture, 0, 0, viewport.getWorldWidth(), viewport.getWorldHeight());
-        bucketSprite.draw(game.batch);
+
+        // Рисуем текущий кадр анимации
+        TextureRegion currentFrame = currentAnimation.getKeyFrame(animationTime);
+        game.batch.draw(currentFrame, bucketSprite.getX(), bucketSprite.getY(), bucketSprite.getWidth(), bucketSprite.getHeight());
+
         dropManager.draw(game.batch);
         enemyManager.drawEnemies(game.batch);
         groundEnemyManager.drawGroundEnemies(game.batch);
@@ -206,6 +233,7 @@ public class GameScreen implements Screen {
 
         game.batch.end();
     }
+
 
     private void drawUI() {
         float iconSize = 0.5f;
