@@ -62,25 +62,23 @@ public class ShopScreen implements Screen {
         createBuyButton(slot1X, slot1Y - 50, "Slot 1");
         createBuyButton(slot2X, slot2Y - 50, "Slot 2");
         createBuyButton(slot3X, slot3Y - 50, "Slot 3");
+
+        // Добавление кнопки возврата в меню
+        createBackButton();
     }
 
     private void createBuyButton(float x, float y, String buttonText) {
-        // Загрузка текстур кнопки
         Texture buttonUpTexture = new Texture("7.png");
         Texture buttonDownTexture = new Texture("46.png");
 
-        // Создание drawable для состояния кнопки
         TextButton.TextButtonStyle textButtonStyle = new TextButton.TextButtonStyle();
         textButtonStyle.up = new TextureRegionDrawable(new TextureRegion(buttonUpTexture));
         textButtonStyle.down = new TextureRegionDrawable(new TextureRegion(buttonDownTexture));
-        textButtonStyle.font = font; // Используем уже инициализированный BitmapFont
+        textButtonStyle.font = font;
 
-        // Создание кнопки
         TextButton button = new TextButton("Купить", textButtonStyle);
         button.setSize(slotWidth, 30);
-
-        // Сместим кнопку ниже
-        button.setPosition(x, y - 80); // Увеличили смещение до 80
+        button.setPosition(x, y - 80);
         button.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
@@ -88,6 +86,26 @@ public class ShopScreen implements Screen {
             }
         });
         stage.addActor(button);
+    }
+
+    private void createBackButton() {
+        Texture buttonUpTexture = new Texture("Button5.png");
+
+        TextButton.TextButtonStyle textButtonStyle = new TextButton.TextButtonStyle();
+        textButtonStyle.up = new TextureRegionDrawable(new TextureRegion(buttonUpTexture));
+        textButtonStyle.font = font;
+
+        TextButton backButton = new TextButton("Назад", textButtonStyle);
+        backButton.setSize(150, 50);
+        backButton.setPosition(10, 10); // Расположение в левом нижнем углу
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                game.setScreen(new MainMenuScreen(game)); // Переход в главное меню
+                dispose();
+            }
+        });
+        stage.addActor(backButton);
     }
 
     @Override
@@ -98,34 +116,23 @@ public class ShopScreen implements Screen {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
 
-        // Отрисовка фона
         game.batch.draw(backgroundTexture, 0, 0, camera.viewportWidth, camera.viewportHeight);
-
-        // Отрисовка ячеек с картинками и текста
-        drawSlotWithImageAndText(slot1X, slot1Y, slotImage1, "Medical Kit", "Coast: 100,000");
-        drawSlotWithImageAndText(slot2X, slot2Y, slotImage2, "NonStop Ultra Max Edition", "Coast: 200,000");
-        drawSlotWithImageAndText(slot3X, slot3Y, slotImage3, "Armor", "Coast: 300,000");
+        drawSlotWithImageAndText(slot1X, slot1Y, slotImage1, "Medical Kit", "Cost: 100,000");
+        drawSlotWithImageAndText(slot2X, slot2Y, slotImage2, "NonStop Ultra Max Edition", "Cost: 200,000");
+        drawSlotWithImageAndText(slot3X, slot3Y, slotImage3, "Armor", "Cost: 300,000");
 
         game.batch.end();
 
-        // Рендеринг кнопок
         stage.act(delta);
         stage.draw();
     }
 
     private void drawSlotWithImageAndText(float x, float y, Texture image, String topText, String bottomText) {
-        // Рисование текста над слотом
         font.draw(game.batch, topText, x + slotWidth / 2 - font.getSpaceXadvance() * topText.length() / 2, y + slotHeight + 20);
-
-        // Слот
         game.batch.draw(slotTexture, x, y, slotWidth, slotHeight);
-
-        // Картинка на слоте
-        float imageX = x + (slotWidth - 80) / 2; // Центрирование картинки
+        float imageX = x + (slotWidth - 80) / 2;
         float imageY = y + (slotHeight - 80) / 2;
         game.batch.draw(image, imageX, imageY, 80, 80);
-
-        // Рисование текста под слотом
         font.draw(game.batch, bottomText, x + slotWidth / 2 - font.getSpaceXadvance() * bottomText.length() / 2, y - 10);
     }
 
@@ -145,7 +152,6 @@ public class ShopScreen implements Screen {
 
     @Override
     public void dispose() {
-        // Освобождение ресурсов
         backgroundTexture.dispose();
         slotTexture.dispose();
         slotImage1.dispose();
