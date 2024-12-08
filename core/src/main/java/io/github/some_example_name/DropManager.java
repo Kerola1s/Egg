@@ -21,18 +21,21 @@ public class DropManager {
     private final Map<Texture, Integer> eggScores;
     private final Map<Texture, Float> eggSpawnRates;
     private Sound dropSound;
+    private final ScoreManager scoreManager;
 
     private float dropTimer;
     private float spawnInterval = 3f; // Начальный интервал спавна
     private float dropSpeed = 1f; // Начальная скорость падения
 
-    public DropManager(Texture[] dropTextures, Texture goldenEggTexture, Viewport viewport) {
+    public DropManager(Texture[] dropTextures, Texture goldenEggTexture, Viewport viewport, ScoreManager scoreManager) {
         this.dropTextures = dropTextures;
         this.goldenEggTexture = goldenEggTexture;
         this.viewport = viewport;
+        this.scoreManager = scoreManager; // Инициализация переданного ScoreManager
         this.drops = new Array<>();
         this.dropTimer = 0;
         this.dropSound = Gdx.audio.newSound(Gdx.files.internal("CatchEggSound.mp3"));
+
         // Устанавливаем стоимость для всех 15 яиц
         eggScores = new HashMap<>();
         for (int i = 0; i < 5; i++) eggScores.put(dropTextures[i], MathUtils.random(50, 100)); // Дешевые
@@ -56,30 +59,28 @@ public class DropManager {
     public void update(float delta, Rectangle bucketRectangle, Runnable onMissedDrop) {
         dropTimer += delta;
 
-        // Постепенное уменьшение интервала спавна и увеличение скорости
         if (spawnInterval > 1f) spawnInterval -= delta * 0.01f;
         dropSpeed += delta * 0.02f;
 
-        // Спавн новых капель
         if (dropTimer > spawnInterval) {
             dropTimer = 0;
             spawnDrop();
         }
 
-        // Обновление капель
         for (int i = drops.size - 1; i >= 0; i--) {
             Sprite drop = drops.get(i);
-            drop.translateY(-dropSpeed * delta); // Скорость падения яйца
+            drop.translateY(-dropSpeed * delta);
 
             if (drop.getY() < -drop.getHeight()) {
-                drops.removeIndex(i); // Удаляем каплю, если она ушла за экран
-                Gdx.app.log("DropManager", "Яйцо пропущено!");
-                onMissedDrop.run(); // Уведомляем о пропуске
+                drops.removeIndex(i);
+                onMissedDrop.run();
             } else if (drop.getBoundingRectangle().overlaps(bucketRectangle)) {
-                // Проверяем на пересечение с корзиной
-                Gdx.app.log("DropManager", "Яйцо поймано!");
-                drops.removeIndex(i); // Удаляем пойманное яйцо
+                drops.removeIndex(i);
                 dropSound.play();
+
+                int score = getScoreForTexture(drop.getTexture());
+                scoreManager.addToTotalScore(score);
+                Gdx.app.log("DropManager", "Caught egg! + " + score + " points. Total: " + scoreManager.getTotalScore());
             }
         }
     }
@@ -89,6 +90,7 @@ public class DropManager {
             drop.draw(batch);
         }
     }
+
     public Sprite getCaughtDrop(Rectangle bucketRectangle) {
         for (int i = drops.size - 1; i >= 0; i--) {
             Sprite drop = drops.get(i);
@@ -99,7 +101,6 @@ public class DropManager {
         }
         return null;
     }
-
 
     public void dispose() {
         for (Texture texture : dropTextures) {

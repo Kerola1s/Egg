@@ -11,8 +11,10 @@ import com.badlogic.gdx.utils.ScreenUtils;
 public class MainMenuScreen implements Screen {
     Texture playButtonTexture;
     Texture exitButtonTexture;
+    Texture shopButtonTexture;
     float playButtonX, playButtonY, playButtonWidth, playButtonHeight;
     float exitButtonX, exitButtonY, exitButtonWidth, exitButtonHeight;
+    float shopButtonX, shopButtonY, shopButtonWidth, shopButtonHeight;
     final Drop game;
     OrthographicCamera camera;
     Texture backgroundTexture;
@@ -33,6 +35,7 @@ public class MainMenuScreen implements Screen {
         backgroundTexture = new Texture("BackgroundMenu.png");
         playButtonTexture = new Texture("Button1.png");
         exitButtonTexture = new Texture("Button5.png");
+        shopButtonTexture = new Texture("Button4.png");
 
         // Установка размеров и позиций кнопок
         playButtonWidth = 200;
@@ -44,6 +47,11 @@ public class MainMenuScreen implements Screen {
         exitButtonHeight = 50; // Уменьшенная высота кнопки выхода
         exitButtonX = Gdx.graphics.getWidth() - exitButtonWidth - 10; // Смещение от правого края экрана
         exitButtonY = Gdx.graphics.getHeight() - exitButtonHeight - 10; // Смещение от верхнего края экрана
+
+        shopButtonWidth = 200;
+        shopButtonHeight = 150;
+        shopButtonX = Gdx.graphics.getWidth() / 2 - shopButtonWidth / 2 + 250;
+        shopButtonY = Gdx.graphics.getHeight() / 2 - shopButtonHeight / 2 - 150;
 
         // Загрузка фоновой музыки и звука кнопки
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("MainTheme.mp3"));
@@ -63,12 +71,11 @@ public class MainMenuScreen implements Screen {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
 
-        // Отрисовка фона
+        // Отрисовка фона и кнопок
         game.batch.draw(backgroundTexture, 0, 0, camera.viewportWidth, camera.viewportHeight);
-
-        // Отрисовка кнопок
         game.batch.draw(playButtonTexture, playButtonX, playButtonY, playButtonWidth, playButtonHeight);
         game.batch.draw(exitButtonTexture, exitButtonX, exitButtonY, exitButtonWidth, exitButtonHeight);
+        game.batch.draw(shopButtonTexture, shopButtonX, shopButtonY, shopButtonWidth, shopButtonHeight);
 
         // Отрисовка общего счёта
         int totalScore = scoreManager.getTotalScore();
@@ -84,16 +91,24 @@ public class MainMenuScreen implements Screen {
             // Проверка нажатия кнопки "Играть"
             if (touchX >= playButtonX && touchX <= playButtonX + playButtonWidth &&
                 touchY >= playButtonY && touchY <= playButtonY + playButtonHeight) {
-                buttonSound.play(); // Воспроизведение звука кнопки
-                game.setScreen(new GameScreen(game)); // Переход на новый экран
+                buttonSound.play();
+                game.setScreen(new GameScreen(game));
                 dispose();
             }
 
             // Проверка нажатия кнопки "Выход"
             if (touchX >= exitButtonX && touchX <= exitButtonX + exitButtonWidth &&
                 touchY >= exitButtonY && touchY <= exitButtonY + exitButtonHeight) {
-                buttonSound.play(); // Воспроизведение звука кнопки
-                Gdx.app.exit(); // Завершение игры
+                buttonSound.play();
+                Gdx.app.exit();
+            }
+
+            // Проверка нажатия кнопки "Магазин"
+            if (touchX >= shopButtonX && touchX <= shopButtonX + shopButtonWidth &&
+                touchY >= shopButtonY && touchY <= shopButtonY + shopButtonHeight) {
+                buttonSound.play();
+                game.setScreen(new ShopScreen(game)); // Переход на экран магазина
+                dispose();
             }
         }
     }
@@ -115,6 +130,7 @@ public class MainMenuScreen implements Screen {
         // Освобождение ресурсов
         playButtonTexture.dispose();
         exitButtonTexture.dispose();
+        shopButtonTexture.dispose();
         backgroundTexture.dispose();
         backgroundMusic.dispose();
         buttonSound.dispose();

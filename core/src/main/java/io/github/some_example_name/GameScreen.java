@@ -4,20 +4,16 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-
 
 public class GameScreen implements Screen {
     private static final float WALK_SPEED = 2f;
@@ -28,7 +24,8 @@ public class GameScreen implements Screen {
     private static final float JUMP_VELOCITY = 7f;
     private static final float GRAVITY = -10.8f;
     private static final int MAX_LIVES = 5;
-    // Переменные для анимации
+    private static final float STAMINA_COOLDOWN = 5f; // Время восстановления
+
     private Animation<TextureRegion> walkAnimation;
     private Animation<TextureRegion> idleAnimation;
     private Animation<TextureRegion> currentAnimation;
@@ -59,6 +56,7 @@ public class GameScreen implements Screen {
     private boolean isFacingRight = true;
     private int lives = MAX_LIVES;
     private int currentScore = 0;
+    private float staminaCooldownTimer = 0f; // Таймер восстановления
 
     public GameScreen(Drop game) {
         this.game = game;
@@ -74,7 +72,7 @@ public class GameScreen implements Screen {
         this.bucketSprite = new Sprite(bucketTexture);
         this.bucketSprite.setSize(2, 2);
         this.bucketRectangle = new Rectangle();
-
+        this.scoreManager = new ScoreManager();
         this.dropManager = new DropManager(
             new Texture[]{
                 new Texture("Egg1.png"),
@@ -94,12 +92,12 @@ public class GameScreen implements Screen {
                 new Texture("Egg15.png")
             },
             new Texture("golden-egg.png"),
-            viewport
+            viewport,
+            scoreManager
         );
         this.enemyManager = new EnemyManager(new Texture("FallEnemy.png"), viewport);
         this.groundEnemyManager = new GroundEnemyManager(new Texture("Enemy.png"), viewport);
         this.healManager = new Heal(new Texture("heal.png"), viewport);
-        this.scoreManager = new ScoreManager();
 
         music.setLooping(true);
         music.setVolume(0.5f);
@@ -107,13 +105,12 @@ public class GameScreen implements Screen {
 
         font.setColor(Color.WHITE);
         font.getData().setScale(3f);
-        Texture wolfSheet = new Texture("sprite.png");
-        TextureRegion[][] frames = TextureRegion.split(wolfSheet, wolfSheet.getWidth() / 2, wolfSheet.getHeight() / 2); // 3 кадра в строке, 2 строки
 
+        Texture wolfSheet = new Texture("sprite.png");
+        TextureRegion[][] frames = TextureRegion.split(wolfSheet, wolfSheet.getWidth() / 2, wolfSheet.getHeight() / 2);
 
         walkAnimation = new Animation<>(0.1f, frames[0]);
         walkAnimation.setPlayMode(Animation.PlayMode.LOOP);
-
 
         Texture idleTexture = new Texture("wolf2.png");
         idleAnimation = new Animation<>(1f, new TextureRegion(idleTexture));
@@ -135,12 +132,19 @@ public class GameScreen implements Screen {
     private void handleInput(float delta) {
         float speed = WALK_SPEED;
 
-        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) && currentStamina > 0) {
+        if (staminaCooldownTimer > 0) {
+            staminaCooldownTimer -= delta; // Уменьшаем таймер
+        }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) && currentStamina > 0 && staminaCooldownTimer <= 0) {
             speed = RUN_SPEED;
             currentStamina -= STAMINA_USAGE * delta;
             isRunning = true;
         } else {
             isRunning = false;
+            if (currentStamina <= 0) {
+                staminaCooldownTimer = STAMINA_COOLDOWN; // Активируем таймер
+            }
             currentStamina = Math.min(currentStamina + STAMINA_REGEN * delta, MAX_STAMINA);
         }
 
@@ -150,16 +154,16 @@ public class GameScreen implements Screen {
                 isFacingRight = true;
             }
             bucketSprite.translateX(speed * delta);
-            currentAnimation = walkAnimation; // Включаем анимацию ходьбы
+            currentAnimation = walkAnimation;
         } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
             if (isFacingRight) {
                 bucketSprite.flip(true, false);
                 isFacingRight = false;
             }
             bucketSprite.translateX(-speed * delta);
-            currentAnimation = walkAnimation; // Включаем анимацию ходьбы
+            currentAnimation = walkAnimation;
         } else {
-            currentAnimation = idleAnimation; // Персонаж стоит
+            currentAnimation = idleAnimation;
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !isJumping) {
@@ -167,9 +171,6 @@ public class GameScreen implements Screen {
             isJumping = true;
         }
     }
-
-
-
 
     private void updateGameLogic(float delta) {
         bucketRectangle.set(
@@ -185,7 +186,6 @@ public class GameScreen implements Screen {
             int score = dropManager.getScoreForTexture(caughtDrop.getTexture());
             currentScore += score;
             scoreManager.addToTotalScore(score);
-            // Проигрываем звук
         }
 
         healManager.update(delta, bucketRectangle, () -> {
@@ -208,7 +208,6 @@ public class GameScreen implements Screen {
 
         bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, viewport.getWorldWidth() - bucketSprite.getWidth()));
         animationTime += delta;
-
     }
 
     private void drawGame() {
@@ -220,7 +219,6 @@ public class GameScreen implements Screen {
 
         game.batch.draw(backgroundTexture, 0, 0, viewport.getWorldWidth(), viewport.getWorldHeight());
 
-        // Рисуем текущий кадр анимации
         TextureRegion currentFrame = currentAnimation.getKeyFrame(animationTime);
         game.batch.draw(currentFrame, bucketSprite.getX(), bucketSprite.getY(), bucketSprite.getWidth(), bucketSprite.getHeight());
 
@@ -230,27 +228,29 @@ public class GameScreen implements Screen {
         healManager.draw(game.batch);
 
         drawUI();
+        drawText();
 
         game.batch.end();
     }
-
 
     private void drawUI() {
         float iconSize = 0.5f;
         float spacing = 0.3f;
 
-        // Draw stamina
         for (int i = 0; i < Math.ceil(currentStamina); i++) {
             game.batch.draw(staminaIcon, viewport.getWorldWidth() - (iconSize + spacing) * (i + 1), viewport.getWorldHeight() - iconSize, iconSize, iconSize);
         }
 
-        // Draw lives
         for (int i = 0; i < lives; i++) {
             game.batch.draw(lifeIcon, spacing + i * (iconSize + spacing), viewport.getWorldHeight() - iconSize - spacing, iconSize, iconSize);
         }
 
-        // Draw score
         font.draw(game.batch, "Score: " + currentScore, 10, viewport.getWorldHeight() - 10);
+    }
+    private void drawText() {
+        // Отображение общего счёта в левом верхнем углу экрана
+        int totalScore = scoreManager.getTotalScore();
+        font.draw(game.batch, "Total Score: " + totalScore, 10, viewport.getWorldHeight() - 30);
     }
 
     private void reduceLife() {
