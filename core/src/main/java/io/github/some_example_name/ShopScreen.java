@@ -58,16 +58,25 @@ public class ShopScreen implements Screen {
         slot3X = 650;
         slot3Y = 300;
 
-        // Добавление кнопок "Купить"
-        createBuyButton(slot1X, slot1Y - 50, "Slot 1");
-        createBuyButton(slot2X, slot2Y - 50, "Slot 2");
-        createBuyButton(slot3X, slot3Y - 50, "Slot 3");
+        // Добавление кнопки для аптечки
+        createBuyButton(slot1X, slot1Y - 50, "Аптечка", 100000, () -> {
+            game.gameScreen.increaseLives(2); // Увеличиваем жизни
+        });
+
+        // Добавление других кнопок
+        createBuyButton(slot2X, slot2Y - 50, "NonStop", 200000, () -> {
+            System.out.println("NonStop куплен!");
+        });
+
+        createBuyButton(slot3X, slot3Y - 50, "Броня", 300000, () -> {
+            System.out.println("Броня куплена!");
+        });
 
         // Добавление кнопки возврата в меню
         createBackButton();
     }
 
-    private void createBuyButton(float x, float y, String buttonText) {
+    private void createBuyButton(float x, float y, String buttonText, int cost, Runnable onPurchase) {
         Texture buttonUpTexture = new Texture("7.png");
         Texture buttonDownTexture = new Texture("46.png");
 
@@ -79,12 +88,26 @@ public class ShopScreen implements Screen {
         TextButton button = new TextButton("Купить", textButtonStyle);
         button.setSize(slotWidth, 30);
         button.setPosition(x, y - 80);
+
         button.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                System.out.println(buttonText + " clicked");
+                if (game.scoreManager.getTotalScore() >= cost) {
+                    // Списываем деньги
+                    game.scoreManager.addToTotalScore(-cost);
+
+                    // Выполняем покупку
+                    onPurchase.run();
+
+                    // Обновляем кнопку
+                    button.setText("Куплено");
+                    button.setDisabled(true);
+                } else {
+                    System.out.println("Недостаточно средств для покупки " + buttonText);
+                }
             }
         });
+
         stage.addActor(button);
     }
 
@@ -117,9 +140,9 @@ public class ShopScreen implements Screen {
         game.batch.begin();
 
         game.batch.draw(backgroundTexture, 0, 0, camera.viewportWidth, camera.viewportHeight);
-        drawSlotWithImageAndText(slot1X, slot1Y, slotImage1, "Medical Kit", "Cost: 100,000");
-        drawSlotWithImageAndText(slot2X, slot2Y, slotImage2, "NonStop Ultra Max Edition", "Cost: 200,000");
-        drawSlotWithImageAndText(slot3X, slot3Y, slotImage3, "Armor", "Cost: 300,000");
+        drawSlotWithImageAndText(slot1X, slot1Y, slotImage1, "Аптечка", "Стоимость: 100,000");
+        drawSlotWithImageAndText(slot2X, slot2Y, slotImage2, "NonStop", "Стоимость: 200,000");
+        drawSlotWithImageAndText(slot3X, slot3Y, slotImage3, "Броня", "Стоимость: 300,000");
 
         game.batch.end();
 
@@ -161,3 +184,4 @@ public class ShopScreen implements Screen {
         stage.dispose();
     }
 }
+

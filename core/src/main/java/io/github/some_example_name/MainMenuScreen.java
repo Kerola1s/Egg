@@ -55,7 +55,6 @@ public class MainMenuScreen implements Screen {
 
         // Загрузка фоновой музыки и звука кнопки
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("MainTheme.mp3"));
-        buttonSound = Gdx.audio.newSound(Gdx.files.internal("ButtonSound.mp3"));
 
         // Запуск фоновой музыки
         backgroundMusic.setLooping(true); // Повтор музыки
@@ -113,6 +112,8 @@ public class MainMenuScreen implements Screen {
         }
     }
 
+
+
     @Override
     public void resize(int width, int height) {}
 
@@ -123,7 +124,9 @@ public class MainMenuScreen implements Screen {
     public void resume() {}
 
     @Override
-    public void hide() {}
+    public void hide() {
+        backgroundMusic.stop();
+    }
 
     @Override
     public void dispose() {

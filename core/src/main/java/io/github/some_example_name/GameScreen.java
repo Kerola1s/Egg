@@ -120,7 +120,9 @@ public class GameScreen implements Screen {
     }
 
     @Override
-    public void show() {}
+    public void show() {
+        music.play();
+    }
 
     @Override
     public void render(float delta) {
@@ -210,6 +212,11 @@ public class GameScreen implements Screen {
         animationTime += delta;
     }
 
+    public void increaseLives(int amount) {
+        lives = Math.min(lives + amount, MAX_LIVES); // Увеличиваем жизни, но не больше MAX_LIVES
+    }
+
+
     private void drawGame() {
         ScreenUtils.clear(0, 0, 0.2f, 1);
 
@@ -271,13 +278,17 @@ public class GameScreen implements Screen {
     }
 
     @Override
-    public void pause() {}
+    public void pause() {
+    }
 
     @Override
-    public void resume() {}
+    public void resume() {
+    }
 
     @Override
-    public void hide() {}
+    public void hide() {
+        music.stop();
+    }
 
     @Override
     public void dispose() {
