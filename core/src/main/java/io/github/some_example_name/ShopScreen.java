@@ -39,7 +39,7 @@ public class ShopScreen implements Screen {
     @Override
     public void show() {
         // Загрузка текстур
-        backgroundTexture = new Texture("54.png");
+        backgroundTexture = new Texture("Shop.png");
         slotTexture = new Texture("Slot.png");
         slotImage1 = new Texture("Medkit.png");
         slotImage2 = new Texture("NonStop.png");
@@ -59,7 +59,7 @@ public class ShopScreen implements Screen {
         slot3Y = 300;
 
         // Добавление кнопки для аптечки
-        createBuyButton(slot1X, slot1Y - 50, "Аптечка", 100000, () -> {
+        createBuyButton(slot1X, slot1Y - 50, "MedKit", 100000, () -> {
             game.gameScreen.increaseLives(2); // Увеличиваем жизни
         });
 
@@ -68,7 +68,7 @@ public class ShopScreen implements Screen {
             System.out.println("NonStop куплен!");
         });
 
-        createBuyButton(slot3X, slot3Y - 50, "Броня", 300000, () -> {
+        createBuyButton(slot3X, slot3Y - 50, "Armor", 300000, () -> {
             System.out.println("Броня куплена!");
         });
 

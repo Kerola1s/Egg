@@ -38,7 +38,7 @@ public class GameScreen implements Screen {
     private final Texture bucketTexture;
     private final Texture staminaIcon;
     private final Texture lifeIcon;
-    private final Music music;
+    private Music music;
 
     private final Sprite bucketSprite;
     private final Rectangle bucketRectangle;
@@ -66,7 +66,6 @@ public class GameScreen implements Screen {
         this.bucketTexture = new Texture("wolf.png");
         this.staminaIcon = new Texture("stamina.png");
         this.lifeIcon = new Texture("НР.png");
-        this.music = Gdx.audio.newMusic(Gdx.files.internal("Music.mp3"));
         this.font = new BitmapFont();
 
         this.bucketSprite = new Sprite(bucketTexture);
@@ -99,9 +98,9 @@ public class GameScreen implements Screen {
         this.groundEnemyManager = new GroundEnemyManager(new Texture("Enemy.png"), viewport);
         this.healManager = new Heal(new Texture("heal.png"), viewport);
 
-        music.setLooping(true);
-        music.setVolume(0.5f);
-        music.play();
+    //    music.setLooping(true);
+      //  music.setVolume(0.5f);
+     //   music.play();
 
         font.setColor(Color.WHITE);
         font.getData().setScale(3f);
@@ -121,6 +120,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
+        music = Gdx.audio.newMusic(Gdx.files.internal("Music.mp3"));
         music.play();
     }
 
@@ -268,7 +268,7 @@ public class GameScreen implements Screen {
     }
 
     private void gameOver() {
-        music.stop();
+      music.stop();
         game.setScreen(new GameOverScreen(game));
     }
 
@@ -287,7 +287,6 @@ public class GameScreen implements Screen {
 
     @Override
     public void hide() {
-        music.stop();
     }
 
     @Override
@@ -297,7 +296,7 @@ public class GameScreen implements Screen {
         dropManager.dispose();
         enemyManager.dispose();
         groundEnemyManager.dispose();
-        music.dispose();
+       music.dispose();
         staminaIcon.dispose();
         font.dispose();
         lifeIcon.dispose();
