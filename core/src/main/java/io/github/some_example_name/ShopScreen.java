@@ -49,32 +49,40 @@ public class ShopScreen implements Screen {
         font = new BitmapFont();
 
         // Позиции и размеры ячеек
-        slotWidth = 100;
-        slotHeight = 100;
-        slot1X = 150;
-        slot1Y = 300;
-        slot2X = 400;
-        slot2Y = 300;
-        slot3X = 650;
-        slot3Y = 300;
+        slotWidth = 50; // Уменьшенные размеры слота
+        slotHeight = 50;
 
-        // Добавление кнопки для аптечки
-        createBuyButton(slot1X, slot1Y - 50, "MedKit", 100000, () -> {
+        // Центрируем элементы в горизонтальном ряду
+        float centerX = camera.viewportWidth / 2 - (3 * slotWidth + 2 * 20) / 2; // Начальная позиция (с учетом отступов)
+        float centerY = camera.viewportHeight / 2 + 24; // Вертикальная позиция слотов
+
+        // Уникальные координаты для каждого предмета
+        slot1X = centerX;
+        slot1Y = centerY;
+
+        slot2X = slot1X + slotWidth + 40; // Вторая ячейка с отступом
+        slot2Y = centerY;
+
+        slot3X = slot2X + slotWidth + 40; // Третья ячейка с отступом
+        slot3Y = centerY;
+
+        // Кнопки для каждого предмета
+        createBuyButton(slot1X, slot1Y - 60, "MedKit", 100000, () -> {
             game.gameScreen.increaseLives(2); // Увеличиваем жизни
         });
 
-        // Добавление других кнопок
-        createBuyButton(slot2X, slot2Y - 50, "NonStop", 200000, () -> {
+        createBuyButton(slot2X, slot2Y - 60, "NonStop", 200000, () -> {
             System.out.println("NonStop куплен!");
         });
 
-        createBuyButton(slot3X, slot3Y - 50, "Armor", 300000, () -> {
+        createBuyButton(slot3X, slot3Y - 60, "Armor", 300000, () -> {
             System.out.println("Броня куплена!");
         });
 
-        // Добавление кнопки возврата в меню
-        createBackButton();
+        createBackButton(); // Кнопка "Назад"
     }
+
+
 
     private void createBuyButton(float x, float y, String buttonText, int cost, Runnable onPurchase) {
         Texture buttonUpTexture = new Texture("7.png");
@@ -85,7 +93,7 @@ public class ShopScreen implements Screen {
         textButtonStyle.down = new TextureRegionDrawable(new TextureRegion(buttonDownTexture));
         textButtonStyle.font = font;
 
-        TextButton button = new TextButton("Купить", textButtonStyle);
+        TextButton button = new TextButton("Buy", textButtonStyle);
         button.setSize(slotWidth, 30);
         button.setPosition(x, y - 80);
 
@@ -100,7 +108,7 @@ public class ShopScreen implements Screen {
                     onPurchase.run();
 
                     // Обновляем кнопку
-                    button.setText("Куплено");
+                    button.setText("Buyed");
                     button.setDisabled(true);
                 } else {
                     System.out.println("Недостаточно средств для покупки " + buttonText);
@@ -118,7 +126,7 @@ public class ShopScreen implements Screen {
         textButtonStyle.up = new TextureRegionDrawable(new TextureRegion(buttonUpTexture));
         textButtonStyle.font = font;
 
-        TextButton backButton = new TextButton("Назад", textButtonStyle);
+        TextButton backButton = new TextButton("Back", textButtonStyle);
         backButton.setSize(150, 50);
         backButton.setPosition(10, 10); // Расположение в левом нижнем углу
         backButton.addListener(new ClickListener() {
@@ -140,9 +148,9 @@ public class ShopScreen implements Screen {
         game.batch.begin();
 
         game.batch.draw(backgroundTexture, 0, 0, camera.viewportWidth, camera.viewportHeight);
-        drawSlotWithImageAndText(slot1X, slot1Y, slotImage1, "Аптечка", "Стоимость: 100,000");
-        drawSlotWithImageAndText(slot2X, slot2Y, slotImage2, "NonStop", "Стоимость: 200,000");
-        drawSlotWithImageAndText(slot3X, slot3Y, slotImage3, "Броня", "Стоимость: 300,000");
+        drawSlotWithImageAndText(slot1X, slot1Y, slotImage1, "Medkit", "Coast: 100k");
+        drawSlotWithImageAndText(slot2X, slot2Y, slotImage2, "NonStop", "Coast: 200k");
+        drawSlotWithImageAndText(slot3X, slot3Y, slotImage3, "Armor", "Coast: 300k");
 
         game.batch.end();
 
@@ -151,11 +159,12 @@ public class ShopScreen implements Screen {
     }
 
     private void drawSlotWithImageAndText(float x, float y, Texture image, String topText, String bottomText) {
-        font.draw(game.batch, topText, x + slotWidth / 2 - font.getSpaceXadvance() * topText.length() / 2, y + slotHeight + 20);
+        // Центрируем текст относительно слота
+        font.draw(game.batch, topText, x + slotWidth / 2 - font.getSpaceXadvance() * topText.length() / 2, y + slotHeight + 15);
         game.batch.draw(slotTexture, x, y, slotWidth, slotHeight);
-        float imageX = x + (slotWidth - 80) / 2;
-        float imageY = y + (slotHeight - 80) / 2;
-        game.batch.draw(image, imageX, imageY, 80, 80);
+        float imageX = x + (slotWidth - 60) / 2; // Уменьшаем размер изображения внутри слота
+        float imageY = y + (slotHeight - 60) / 2;
+        game.batch.draw(image, imageX, imageY, 60, 60); // Новые размеры изображения
         font.draw(game.batch, bottomText, x + slotWidth / 2 - font.getSpaceXadvance() * bottomText.length() / 2, y - 10);
     }
 

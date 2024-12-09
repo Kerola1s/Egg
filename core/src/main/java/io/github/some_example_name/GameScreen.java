@@ -105,8 +105,8 @@ public class GameScreen implements Screen {
         font.setColor(Color.WHITE);
         font.getData().setScale(3f);
 
-        Texture wolfSheet = new Texture("sprite.png");
-        TextureRegion[][] frames = TextureRegion.split(wolfSheet, wolfSheet.getWidth() / 2, wolfSheet.getHeight() / 2);
+        Texture wolfSheet = new Texture("sprite1.png");
+        TextureRegion[][] frames = TextureRegion.split(wolfSheet, wolfSheet.getWidth() / 3, wolfSheet.getHeight() / 1);
 
         walkAnimation = new Animation<>(0.1f, frames[0]);
         walkAnimation.setPlayMode(Animation.PlayMode.LOOP);
