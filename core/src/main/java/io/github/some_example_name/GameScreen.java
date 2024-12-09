@@ -122,6 +122,9 @@ public class GameScreen implements Screen {
     public void show() {
         music = Gdx.audio.newMusic(Gdx.files.internal("Music.mp3"));
         music.play();
+        if (game.scoreManager.isMedkitPurchased()) {
+            increaseLives(2);
+        }
     }
 
     @Override
@@ -213,7 +216,11 @@ public class GameScreen implements Screen {
     }
 
     public void increaseLives(int amount) {
-        lives = Math.min(lives + amount, MAX_LIVES); // Увеличиваем жизни, но не больше MAX_LIVES
+        lives += amount;
+        if (lives > MAX_LIVES) {
+            lives = MAX_LIVES; // Ограничиваем максимальное количество жизней
+        }
+        System.out.println("Жизни увеличены. Текущее количество: " + lives);
     }
 
 
@@ -224,11 +231,26 @@ public class GameScreen implements Screen {
         game.batch.setProjectionMatrix(viewport.getCamera().combined);
         game.batch.begin();
 
+        // Рисуем фон
         game.batch.draw(backgroundTexture, 0, 0, viewport.getWorldWidth(), viewport.getWorldHeight());
 
+        // Получаем текущий кадр анимации
         TextureRegion currentFrame = currentAnimation.getKeyFrame(animationTime);
-        game.batch.draw(currentFrame, bucketSprite.getX(), bucketSprite.getY(), bucketSprite.getWidth(), bucketSprite.getHeight());
 
+        // Определяем размер уменьшенной анимации
+        float reducedWidth = bucketSprite.getWidth() * 0.8f; // Уменьшение размера (80% от оригинала)
+        float reducedHeight = bucketSprite.getHeight() * 0.8f;
+
+        // Отрисовка с учётом направления
+        float drawX = bucketSprite.getX();
+        float drawY = bucketSprite.getY();
+        if (isFacingRight) {
+            game.batch.draw(currentFrame, drawX + reducedWidth, drawY, -reducedWidth, reducedHeight);
+        } else {
+            game.batch.draw(currentFrame, drawX, drawY, reducedWidth, reducedHeight);
+        }
+
+        // Рисуем остальные элементы
         dropManager.draw(game.batch);
         enemyManager.drawEnemies(game.batch);
         groundEnemyManager.drawGroundEnemies(game.batch);

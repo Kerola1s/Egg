@@ -97,24 +97,31 @@ public class ShopScreen implements Screen {
         button.setSize(slotWidth, 30);
         button.setPosition(x, y - 80);
 
-        button.addListener(new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                if (game.scoreManager.getTotalScore() >= cost) {
-                    // Списываем деньги
-                    game.scoreManager.addToTotalScore(-cost);
+        if (game.scoreManager.isMedkitPurchased()) {
+            button.setText("Purchased");
+            button.setDisabled(true);
+        } else {
+            button.addListener(new ClickListener() {
+                @Override
+                public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                    if (game.scoreManager.getTotalScore() >= cost) {
+                        // Списываем деньги
+                        game.scoreManager.addToTotalScore(-cost);
 
-                    // Выполняем покупку
-                    onPurchase.run();
+                        // Выполняем покупку
+                        onPurchase.run();
+                        game.scoreManager.setMedkitPurchased(true);
 
-                    // Обновляем кнопку
-                    button.setText("Buyed");
-                    button.setDisabled(true);
-                } else {
-                    System.out.println("Недостаточно средств для покупки " + buttonText);
+                        // Обновляем кнопку
+                        button.setText("Purchased");
+                        button.setDisabled(true);
+                    } else {
+                        System.out.println("Недостаточно средств для покупки " + buttonText);
+                    }
                 }
-            }
-        });
+            });
+        }
+
 
         stage.addActor(button);
     }

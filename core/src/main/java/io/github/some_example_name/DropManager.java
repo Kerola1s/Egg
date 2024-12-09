@@ -38,9 +38,9 @@ public class DropManager {
 
         // Устанавливаем стоимость для всех 15 яиц
         eggScores = new HashMap<>();
-        for (int i = 0; i < 5; i++) eggScores.put(dropTextures[i], MathUtils.random(50, 100)); // Дешевые
-        for (int i = 5; i < 10; i++) eggScores.put(dropTextures[i], MathUtils.random(150, 250)); // Средние
-        for (int i = 10; i < 13; i++) eggScores.put(dropTextures[i], MathUtils.random(500, 700)); // Дорогие
+        for (int i = 0; i < 5; i++) eggScores.put(dropTextures[i], MathUtils.random(200, 250)); // Дешевые
+        for (int i = 5; i < 10; i++) eggScores.put(dropTextures[i], MathUtils.random(550, 650)); // Средние
+        for (int i = 10; i < 13; i++) eggScores.put(dropTextures[i], MathUtils.random(800, 900)); // Дорогие
         eggScores.put(dropTextures[13], 2000); // Очень дорогие
         eggScores.put(dropTextures[14], 5000); // Очень дорогие
 

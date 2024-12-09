@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
 public class ScoreManager {
+    private static final String MEDKIT_PURCHASED_KEY = "medkit_purchased";
     private static final String PREFERENCES_NAME = "game_scores";
     private static final String TOTAL_SCORE_KEY = "total_score";
 
@@ -22,5 +23,13 @@ public class ScoreManager {
 
     public int getTotalScore() {
         return preferences.getInteger(TOTAL_SCORE_KEY, 0);
+    }
+    public boolean isMedkitPurchased() {
+        return preferences.getBoolean(MEDKIT_PURCHASED_KEY, false);
+    }
+
+    public void setMedkitPurchased(boolean purchased) {
+        preferences.putBoolean(MEDKIT_PURCHASED_KEY, purchased);
+        preferences.flush();
     }
 }
