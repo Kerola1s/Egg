@@ -18,12 +18,12 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 public class GameScreen implements Screen {
     private static final float WALK_SPEED = 2f;
     private static final float RUN_SPEED = 4f;
-    private static final float MAX_STAMINA = 5f;
+    public static float MAX_STAMINA = 3f;
     private static final float STAMINA_REGEN = 1f;
     private static final float STAMINA_USAGE = 1f;
     private static final float JUMP_VELOCITY = 7f;
     private static final float GRAVITY = -10.8f;
-    private static final int MAX_LIVES = 5;
+    public static int MAX_LIVES = 3;
     private static final float STAMINA_COOLDOWN = 5f; // Время восстановления
 
     private Animation<TextureRegion> walkAnimation;
@@ -122,8 +122,8 @@ public class GameScreen implements Screen {
     public void show() {
         music = Gdx.audio.newMusic(Gdx.files.internal("Music.mp3"));
         music.play();
-        if (game.scoreManager.isMedkitPurchased()) {
-            increaseLives(2);
+        if (game.scoreManager.isMedkitPurchased() && MAX_LIVES == 3) {
+            increaseLives(3); // Применяем увеличение жизней только один раз
         }
     }
 
@@ -215,13 +215,16 @@ public class GameScreen implements Screen {
         animationTime += delta;
     }
 
-    public void increaseLives(int amount) {
-        lives += amount;
-        if (lives > MAX_LIVES) {
-            lives = MAX_LIVES; // Ограничиваем максимальное количество жизней
-        }
-        System.out.println("Жизни увеличены. Текущее количество: " + lives);
+    public void increaseLives(int extraLives) {
+        MAX_LIVES += extraLives; // Увеличиваем максимум
+        lives = Math.min(lives + extraLives, MAX_LIVES); // Увеличиваем текущие жизни
     }
+    public void increaseMaxStamina(float amount) {
+        MAX_STAMINA += amount;
+        currentStamina = MAX_STAMINA; // Обновляем текущую выносливость
+        System.out.println("Максимальная выносливость увеличена до: " + MAX_STAMINA);
+    }
+
 
 
     private void drawGame() {

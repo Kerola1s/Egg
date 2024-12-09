@@ -4,9 +4,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
 public class ScoreManager {
-    private static final String MEDKIT_PURCHASED_KEY = "medkit_purchased";
+
     private static final String PREFERENCES_NAME = "game_scores";
     private static final String TOTAL_SCORE_KEY = "total_score";
+    private boolean medkitPurchased = false;
+    private boolean isNonStopPurchased = false;
 
     private final Preferences preferences;
 
@@ -25,11 +27,28 @@ public class ScoreManager {
         return preferences.getInteger(TOTAL_SCORE_KEY, 0);
     }
     public boolean isMedkitPurchased() {
-        return preferences.getBoolean(MEDKIT_PURCHASED_KEY, false);
+        return medkitPurchased;
+    }
+    public void setMedkitPurchased(boolean purchased) {
+        this.medkitPurchased = purchased;
+    }
+    public boolean isNonStopPurchased() {
+        return isNonStopPurchased;
     }
 
-    public void setMedkitPurchased(boolean purchased) {
-        preferences.putBoolean(MEDKIT_PURCHASED_KEY, purchased);
-        preferences.flush();
+    public void setNonStopPurchased(boolean isNonStopPurchased) {
+        this.isNonStopPurchased = isNonStopPurchased;
     }
-}
+
+        public void resetAllData() {
+            preferences.clear();
+            preferences.flush();
+            resetLives();
+        }
+    public void resetLives() {
+
+        GameScreen.MAX_LIVES = 3;
+    }
+
+    }
+

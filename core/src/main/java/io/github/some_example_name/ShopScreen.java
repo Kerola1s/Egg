@@ -2,6 +2,7 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -17,6 +18,7 @@ public class ShopScreen implements Screen {
     final Drop game;
     OrthographicCamera camera;
     Texture backgroundTexture;
+    private Music Shopmusic;
 
     // Текстуры для картинок
     Texture slotTexture;
@@ -41,45 +43,56 @@ public class ShopScreen implements Screen {
         // Загрузка текстур
         backgroundTexture = new Texture("Shop.png");
         slotTexture = new Texture("Slot.png");
-        slotImage1 = new Texture("Medkit.png");
-        slotImage2 = new Texture("NonStop.png");
-        slotImage3 = new Texture("Armor.png");
+        slotImage1 = new Texture("Medkit12.png");
+        slotImage2 = new Texture("NonStop12.png");
 
         // Инициализация шрифта
         font = new BitmapFont();
 
         // Позиции и размеры ячеек
-        slotWidth = 50; // Уменьшенные размеры слота
+        slotWidth = 50;
         slotHeight = 50;
 
-        // Центрируем элементы в горизонтальном ряду
-        float centerX = camera.viewportWidth / 2 - (3 * slotWidth + 2 * 20) / 2; // Начальная позиция (с учетом отступов)
-        float centerY = camera.viewportHeight / 2 + 24; // Вертикальная позиция слотов
+        float centerX = camera.viewportWidth / 2 - (3 * slotWidth + 2 * 20) / 2;
+        float centerY = camera.viewportHeight / 2 + 24;
 
-        // Уникальные координаты для каждого предмета
         slot1X = centerX;
         slot1Y = centerY;
 
-        slot2X = slot1X + slotWidth + 40; // Вторая ячейка с отступом
+        slot2X = slot1X + slotWidth + 70;
         slot2Y = centerY;
 
-        slot3X = slot2X + slotWidth + 40; // Третья ячейка с отступом
+        slot3X = slot2X + slotWidth + 70;
         slot3Y = centerY;
 
-        // Кнопки для каждого предмета
-        createBuyButton(slot1X, slot1Y - 60, "MedKit", 100000, () -> {
-            game.gameScreen.increaseLives(2); // Увеличиваем жизни
-        });
-
-        createBuyButton(slot2X, slot2Y - 60, "NonStop", 200000, () -> {
-            System.out.println("NonStop куплен!");
-        });
-
-        createBuyButton(slot3X, slot3Y - 60, "Armor", 300000, () -> {
-            System.out.println("Броня куплена!");
-        });
+        // Кнопки для покупки предметов
+        createMedkitButton(slot1X, slot1Y - 60);
+        createNonStopButton(slot2X, slot2Y - 60);
 
         createBackButton(); // Кнопка "Назад"
+        Shopmusic = Gdx.audio.newMusic(Gdx.files.internal("ShopMusic.mp3"));
+        Shopmusic.setLooping(true);
+        Shopmusic.setVolume(0.5f);
+        Shopmusic.play();
+    }
+
+    private void createMedkitButton(float x, float y) {
+        createBuyButton(x, y, "Medkit", 100000, () -> {
+            if (!game.scoreManager.isMedkitPurchased()) {
+                game.scoreManager.setMedkitPurchased(true);
+                game.gameScreen.increaseLives(3); // Увеличиваем максимальные жизни
+            }
+        });
+    }
+
+    private void createNonStopButton(float x, float y) {
+        createBuyButton(x, y, "NonStop", 200000, () -> {
+            if (!game.scoreManager.isNonStopPurchased()) {
+                game.scoreManager.setNonStopPurchased(true);
+                game.gameScreen.increaseMaxStamina(3); // Увеличиваем максимум выносливости
+                System.out.println("NonStop куплен!");
+            }
+        });
     }
 
 
@@ -95,33 +108,26 @@ public class ShopScreen implements Screen {
 
         TextButton button = new TextButton("Buy", textButtonStyle);
         button.setSize(slotWidth, 30);
-        button.setPosition(x, y - 80);
+        button.setPosition(x, y - 50); // Поднял кнопку выше
 
-        if (game.scoreManager.isMedkitPurchased()) {
-            button.setText("Purchased");
-            button.setDisabled(true);
-        } else {
-            button.addListener(new ClickListener() {
-                @Override
-                public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                    if (game.scoreManager.getTotalScore() >= cost) {
-                        // Списываем деньги
-                        game.scoreManager.addToTotalScore(-cost);
+        button.addListener(new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                if (game.scoreManager.getTotalScore() >= cost) {
+                    // Списываем деньги
+                    game.scoreManager.addToTotalScore(-cost);
 
-                        // Выполняем покупку
-                        onPurchase.run();
-                        game.scoreManager.setMedkitPurchased(true);
+                    // Выполняем покупку
+                    onPurchase.run();
 
-                        // Обновляем кнопку
-                        button.setText("Purchased");
-                        button.setDisabled(true);
-                    } else {
-                        System.out.println("Недостаточно средств для покупки " + buttonText);
-                    }
+                    // Обновляем кнопку
+                    button.setText("Purchased");
+                    button.setDisabled(true);
+                } else {
+                    System.out.println("Недостаточно средств для покупки " + buttonText);
                 }
-            });
-        }
-
+            }
+        });
 
         stage.addActor(button);
     }
@@ -135,16 +141,17 @@ public class ShopScreen implements Screen {
 
         TextButton backButton = new TextButton("Back", textButtonStyle);
         backButton.setSize(150, 50);
-        backButton.setPosition(10, 10); // Расположение в левом нижнем углу
+        backButton.setPosition(10, 10);
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                game.setScreen(new MainMenuScreen(game)); // Переход в главное меню
-                dispose();
+                Shopmusic.stop(); // Останавливаем музыку
+                game.setScreen(new MainMenuScreen(game)); // Переход к экрану меню
             }
         });
         stage.addActor(backButton);
     }
+
 
     @Override
     public void render(float delta) {
@@ -154,10 +161,13 @@ public class ShopScreen implements Screen {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
 
+        // Отображение фона магазина
         game.batch.draw(backgroundTexture, 0, 0, camera.viewportWidth, camera.viewportHeight);
-        drawSlotWithImageAndText(slot1X, slot1Y, slotImage1, "Medkit", "Coast: 100k");
-        drawSlotWithImageAndText(slot2X, slot2Y, slotImage2, "NonStop", "Coast: 200k");
-        drawSlotWithImageAndText(slot3X, slot3Y, slotImage3, "Armor", "Coast: 300k");
+
+        // Отображение товаров с текстурами и текстом
+        drawItemWithImageAndText(slot1X, slot1Y, slotImage1, "Medkit", "Cost: 100k", "+ 3 lives for you");
+        drawItemWithImageAndText(slot2X, slot2Y, slotImage2, "NonStop", "Cost: 200k", "+3 energy power for you");
+
 
         game.batch.end();
 
@@ -165,15 +175,25 @@ public class ShopScreen implements Screen {
         stage.draw();
     }
 
-    private void drawSlotWithImageAndText(float x, float y, Texture image, String topText, String bottomText) {
-        // Центрируем текст относительно слота
+
+    private void drawItemWithImageAndText(float x, float y, Texture image, String topText, String bottomText, String additionalText) {
+        // Отображение названия предмета сверху
         font.draw(game.batch, topText, x + slotWidth / 2 - font.getSpaceXadvance() * topText.length() / 2, y + slotHeight + 15);
-        game.batch.draw(slotTexture, x, y, slotWidth, slotHeight);
-        float imageX = x + (slotWidth - 60) / 2; // Уменьшаем размер изображения внутри слота
+
+        // Отображение изображения предмета
+        float imageX = x + (slotWidth - 60) / 2;
         float imageY = y + (slotHeight - 60) / 2;
-        game.batch.draw(image, imageX, imageY, 60, 60); // Новые размеры изображения
-        font.draw(game.batch, bottomText, x + slotWidth / 2 - font.getSpaceXadvance() * bottomText.length() / 2, y - 10);
+        game.batch.draw(image, imageX, imageY, 60, 60);
+
+        // Отображение описания/стоимости предмета снизу
+        font.draw(game.batch, bottomText, x + slotWidth / 2 - font.getSpaceXadvance() * bottomText.length() / 2, imageY - 20);
+
+        // Отображение дополнительного текста под стоимостью
+        font.draw(game.batch, additionalText, x + slotWidth / 2 - font.getSpaceXadvance() * additionalText.length() / 2, imageY - 40);
     }
+
+
+
 
     @Override
     public void resize(int width, int height) {
@@ -198,6 +218,6 @@ public class ShopScreen implements Screen {
         slotImage3.dispose();
         font.dispose();
         stage.dispose();
+        Shopmusic.dispose();
     }
 }
-

@@ -15,6 +15,8 @@ public class MainMenuScreen implements Screen {
     float exitButtonX, exitButtonY, exitButtonWidth, exitButtonHeight;
     float shopButtonX, shopButtonY, shopButtonWidth, shopButtonHeight;
     final Drop game;
+    Texture resetButtonTexture;
+    float resetButtonX, resetButtonY, resetButtonWidth, resetButtonHeight;
     OrthographicCamera camera;
     Texture backgroundTexture;
     private ScoreManager scoreManager;
@@ -34,6 +36,7 @@ public class MainMenuScreen implements Screen {
         playButtonTexture = new Texture("Button1.png");
         exitButtonTexture = new Texture("Button5.png");
         shopButtonTexture = new Texture("Button4.png");
+        resetButtonTexture = new Texture("Button2.png");
 
         // Установка размеров и позиций кнопок
         playButtonWidth = 200;
@@ -50,6 +53,11 @@ public class MainMenuScreen implements Screen {
         shopButtonHeight = 150;
         shopButtonX = Gdx.graphics.getWidth() / 2 - shopButtonWidth / 2 + 250;
         shopButtonY = Gdx.graphics.getHeight() / 2 - shopButtonHeight / 2 - 150;
+        resetButtonWidth = 50;
+        resetButtonHeight = 50;
+        resetButtonX = exitButtonX - resetButtonWidth - 10;
+        resetButtonY = exitButtonY;
+
 
         // Загрузка фоновой музыки
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("MainTheme.mp3"));
@@ -71,10 +79,12 @@ public class MainMenuScreen implements Screen {
         game.batch.draw(playButtonTexture, playButtonX, playButtonY, playButtonWidth, playButtonHeight);
         game.batch.draw(exitButtonTexture, exitButtonX, exitButtonY, exitButtonWidth, exitButtonHeight);
         game.batch.draw(shopButtonTexture, shopButtonX, shopButtonY, shopButtonWidth, shopButtonHeight);
+        game.batch.draw(resetButtonTexture, resetButtonX, resetButtonY, resetButtonWidth, resetButtonHeight);
+
 
         // Отрисовка общего счёта
         int totalScore = scoreManager.getTotalScore();
-        game.font.draw(game.batch, "Total Score: " + totalScore, 10, camera.viewportHeight - 30);
+        game.font.draw(game.batch, "Total Score: " + totalScore, 5, camera.viewportHeight - 5);
 
         game.batch.end();
 
@@ -98,7 +108,11 @@ public class MainMenuScreen implements Screen {
                 touchY >= shopButtonY && touchY <= shopButtonY + shopButtonHeight) {
                 game.setScreen(new ShopScreen(game));
                 dispose();
+            }if (touchX >= resetButtonX && touchX <= resetButtonX + resetButtonWidth &&
+                touchY >= resetButtonY && touchY <= resetButtonY + resetButtonHeight) {
+                scoreManager.resetAllData();
             }
+
         }
     }
 
@@ -123,5 +137,6 @@ public class MainMenuScreen implements Screen {
         shopButtonTexture.dispose();
         backgroundTexture.dispose();
         backgroundMusic.dispose();
+        resetButtonTexture.dispose();
     }
 }
