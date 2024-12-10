@@ -22,6 +22,8 @@ public class DropManager {
     private final Map<Texture, Float> eggSpawnRates;
     private Sound dropSound;
     private final ScoreManager scoreManager;
+    private int caughtEggsCount = 0; // Счётчик пойманных яиц
+    private int victoryEggCount = 10; // Количество для победы
 
     private float dropTimer;
     private float spawnInterval = 3f; // Начальный интервал спавна
@@ -78,6 +80,8 @@ public class DropManager {
                 drops.removeIndex(i);
                 dropSound.play();
 
+                caughtEggsCount++;
+
                 int score = getScoreForTexture(drop.getTexture());
                 scoreManager.addToTotalScore(score);
                 Gdx.app.log("DropManager", "Caught egg! + " + score + " points. Total: " + scoreManager.getTotalScore());
@@ -91,6 +95,13 @@ public class DropManager {
         }
     }
 
+    public int getCaughtEggsCount() {
+        return caughtEggsCount;
+    }
+
+    public boolean isVictoryAchieved() {
+        return caughtEggsCount >= victoryEggCount;
+    }
     public Sprite getCaughtDrop(Rectangle bucketRectangle) {
         for (int i = drops.size - 1; i >= 0; i--) {
             Sprite drop = drops.get(i);

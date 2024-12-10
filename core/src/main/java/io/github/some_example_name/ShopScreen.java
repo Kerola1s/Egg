@@ -72,7 +72,7 @@ public class ShopScreen implements Screen {
         createBackButton(); // Кнопка "Назад"
         Shopmusic = Gdx.audio.newMusic(Gdx.files.internal("ShopMusic.mp3"));
         Shopmusic.setLooping(true);
-        Shopmusic.setVolume(0.5f);
+        Shopmusic.setVolume(0.4f);
         Shopmusic.play();
     }
 

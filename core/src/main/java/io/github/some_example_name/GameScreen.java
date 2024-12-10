@@ -39,6 +39,8 @@ public class GameScreen implements Screen {
     private final Texture staminaIcon;
     private final Texture lifeIcon;
     private Music music;
+    private int caughtEggsCount = 0;
+
 
     private final Sprite bucketSprite;
     private final Rectangle bucketRectangle;
@@ -121,6 +123,8 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
         music = Gdx.audio.newMusic(Gdx.files.internal("Music.mp3"));
+        music.setLooping(true);
+        music.setVolume(0.4f);
         music.play();
         if (game.scoreManager.isMedkitPurchased() && MAX_LIVES == 3) {
             increaseLives(3); // Применяем увеличение жизней только один раз
@@ -185,12 +189,19 @@ public class GameScreen implements Screen {
             bucketSprite.getHeight()
         );
 
+
+
         dropManager.update(delta, bucketRectangle, this::reduceLife);
-        Sprite caughtDrop = dropManager.getCaughtDrop(bucketRectangle);
-        if (caughtDrop != null) {
-            int score = dropManager.getScoreForTexture(caughtDrop.getTexture());
-            currentScore += score;
-            scoreManager.addToTotalScore(score);
+
+        if (dropManager.isVictoryAchieved()) {
+            music.stop();
+            game.setScreen(new VictoryScreen(game, scoreManager.getTotalScore()));
+            return;
+        }
+
+        if (caughtEggsCount >= 25) {
+            music.stop();
+            game.setScreen(new VictoryScreen(game, scoreManager.getTotalScore()));
         }
 
         healManager.update(delta, bucketRectangle, () -> {
@@ -213,6 +224,7 @@ public class GameScreen implements Screen {
 
         bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, viewport.getWorldWidth() - bucketSprite.getWidth()));
         animationTime += delta;
+
     }
 
     public void increaseLives(int extraLives) {
@@ -283,6 +295,9 @@ public class GameScreen implements Screen {
         // Отображение общего счёта в левом верхнем углу экрана
         int totalScore = scoreManager.getTotalScore();
         font.draw(game.batch, "Total Score: " + totalScore, 10, viewport.getWorldHeight() - 30);
+        font.draw(game.batch, "Eggs Caught: " + dropManager.getCaughtEggsCount(), 10, viewport.getWorldHeight() - 50);
+
+
     }
 
     private void reduceLife() {
